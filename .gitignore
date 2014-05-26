@@ -1,0 +1,5 @@
+pictures/*
+old
+.svn
+tags
+inc/db.inc.php
