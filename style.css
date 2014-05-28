@@ -212,6 +212,8 @@ a[data-tags~="nsfw"] img
 #viewer .picture .displayed-picture
 	{
 	vertical-align: middle;
+	max-height: 100%;
+	max-width: 100%;
 	}
 
 #viewer #arrow-left, #viewer #arrow-right

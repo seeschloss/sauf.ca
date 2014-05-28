@@ -151,6 +151,7 @@ class Picture
 				$extension = 'png';
 				break;
 			default:
+				echo "Mime-type not acceptable: ".$mime;
 				return false;
 			}
 		$this->type = $mime;
@@ -175,14 +176,16 @@ class Picture
 		$f = fopen($this->path, 'w');
 		if (!$f)
 			{
-			return 'Sorry, unable to save the file :-(';
+			echo 'Unable to open the file for writing.';
+			return false;
 			}
 
 		$length = strlen($data);
 
 		if (fwrite($f, $data, $length) === false)
 			{
-			return 'Sorry, unable to save the file :(';
+			echo 'Unable to save the file.';
+			return false;
 			}
 
 		fclose($f);
@@ -326,14 +329,25 @@ class Picture
 		if ($this->type == 'video/webm')
 			{
 			$this->animated = true;
-			$this->thumbnail_path = str_replace('.webm', '.png', $this->thumbnail_path);
-			$this->thumbnail_src = str_replace('.webm', '.png', $this->thumbnail_src);
-			$animated_path = $this->animated_path();
-			`ffmpeg -i "{$this->path}" -frames 1 "{$this->thumbnail_path}" &>/dev/null`;
-			`ffmpeg -i "{$this->path}" -vf scale="'if(gt(a,1),-1,100)':'if(gt(a,1),100,-1)',crop=100:100" "{$animated_path}" &>/dev/null`;
 
-			list($width_orig, $height_orig, $image_type) = getimagesize($this->thumbnail_path);
-			$im = imagecreatefrompng($this->thumbnail_path);
+			$dir = date('Y-m-d', $this->date);
+			$full_dir = UPLOAD_DIR.'/'.$dir;
+
+			$this->thumbnail_path = $full_dir.'/t'.$this->md5.'.jpg';
+			$this->thumbnail_src = $dir.'/t'.$this->md5.'.jpg';
+
+			$animated_path = $this->animated_path();
+			$tmp = tempnam('/tmp', 'sauf_');
+			unlink($tmp);
+			$tmp = $tmp.'.jpg';
+			`ffmpeg -i "{$this->path}" -frames 1 "{$tmp}" &>/dev/null`;
+			unlink($animated_path);
+			//`ffmpeg -i "{$this->path}" -vf cropdetect=24:10:0,scale="'if(gt(a,1),-1,100)':'if(gt(a,1),100,-1)',crop=100:100" "{$animated_path}" &>/dev/null`;
+			`ffmpeg -i "{$this->path}" -vf scale="'if(gt(a,1),-1,100)':'if(gt(a,1),100,-1)',crop=100:100" -aspect 1 "{$animated_path}" &>/dev/null`;
+
+			list($width_orig, $height_orig, $image_type) = getimagesize($tmp);
+			$im = imagecreatefromjpeg($tmp);
+			unlink($tmp);
 			}
 		else
 			{
@@ -362,14 +376,18 @@ class Picture
 				{
 				case 'image/gif':
 					$this->animated_gif_thumbnail($this->path, $this->animated_path());
-					$im = imagepng($image_thumbnail, $this->thumbnail_path, 9);
+					@unlink($this->thumbnail_path);
+					imagepng($image_thumbnail, $this->thumbnail_path, 9);
 					break;
 				case 'image/png':
-					$im = imagepng($image_thumbnail, $this->thumbnail_path, 9);
+					@unlink($this->thumbnail_path);
+					imagepng($image_thumbnail, $this->thumbnail_path, 9);
 					break;
+				case 'video/webm':
 				case 'image/jpeg':
 					$image_thumbnail = UnsharpMask($image_thumbnail, 80, 0.5, 3);
-					$im = imagejpeg($image_thumbnail, $this->thumbnail_path, 99);
+					@unlink($this->thumbnail_path);
+					imagejpeg($image_thumbnail, $this->thumbnail_path, 99);
 					break;
 				}
 			}

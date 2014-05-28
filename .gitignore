@@ -3,3 +3,4 @@ old
 .svn
 tags
 inc/db.inc.php
+*.swp
