@@ -134,8 +134,11 @@ class Picture
 
 	function write($data)
 		{
+		trigger_error('Writing picture, data '.strlen($data).' bytes long');
 		$finfo = new Finfo(FILEINFO_MIME);
+		trigger_error('Finfo created');
 		@list($mime, $charset) = explode(';', $finfo->buffer($data));
+		trigger_error('Mimetype is '.$mime);
 		switch ($mime)
 			{
 			case 'video/webm':
@@ -151,12 +154,14 @@ class Picture
 				$extension = 'png';
 				break;
 			default:
-				echo "Mime-type not acceptable: ".$mime;
+				trigger_error("Mime-type not acceptable: ".$mime);
 				return false;
 			}
 		$this->type = $mime;
 
 		$this->md5 = md5($data);
+
+		trigger_error('MD5 is '.$this->md5);
 
 		if (empty($this->path))
 			{
@@ -273,18 +278,6 @@ class Picture
 		{
 		$path = $this->path;
 		$this->tags = `curl --silent -XPOST -F numberOfKeywords=5 -F "File=@$path" "http://viscomp1.f4.htw-berlin.de/tomcat/akiwi/AkiwiServlet?ajax=1.4" | jshon -e keywords -a -e word -u`;
-		}
-
-	function print_big()
-		{
-		$src = url('pictures/'.$this->name, true);
-		return '
-			<div id="image-'.$this->name.'" class="image-big">
-				<span>
-					<img src="'.$src.'" alt=""/>
-				</span>
-			</div>
-';
 		}
 
 	function user() {

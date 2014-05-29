@@ -270,7 +270,7 @@ HTML;
 		<head>
 		<meta name="verify-v1" content="n17g0PlfuQUJL57geBEf7j+Nc22f+1pPdcvM2HWTX1c=" />
 			<title>'.htmlspecialchars($title).'</title>
-			<link rel="stylesheet" type="text/css" href="style.css" />
+			<link rel="stylesheet" type="text/css" href="style.1.css" />
 		</head>
 		<body>';
 		}
