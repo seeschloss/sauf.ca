@@ -41,7 +41,9 @@ function url($path, $random = false)
 		{
 		$SERVERS = array
 			(
-			'img.sauf.ca',
+			'a.img.sauf.ca',
+			'b.img.sauf.ca',
+			'c.img.sauf.ca',
 			);
 
 		$index = abs(crc32($path)) % count($SERVERS);
@@ -54,6 +56,82 @@ function url($path, $random = false)
 
 	return 'http://'.$server.'/'.$path;
 	}
+
+function process_url($url)
+	{
+	$url = html_entity_decode($url);
+
+	$details = parse_url($url);
+
+	$c = curl_init();
+
+	$referer = $details['scheme'].'://'.$details['host'];
+
+	curl_setopt($c, CURLOPT_USERAGENT, "Mozilla/5.0");
+	curl_setopt($c, CURLOPT_REFERER, $referer);
+	curl_setopt($c, CURLOPT_URL, $url);
+	curl_setopt($c, CURLOPT_HEADER, true);
+	curl_setopt($c, CURLOPT_NOBODY, true);
+	curl_setopt($c, CURLOPT_RETURNTRANSFER, true);
+	curl_setopt($c, CURLOPT_SSL_VERIFYPEER, false);
+	curl_setopt($c, CURLOPT_CONNECTTIMEOUT, 2);
+	curl_setopt($c, CURLOPT_TIMEOUT, 10);
+	curl_setopt($c, CURLOPT_AUTOREFERER, true);
+	curl_setopt($c, CURLOPT_FOLLOWLOCATION, true);
+	curl_setopt($c, CURLOPT_MAXREDIRS, 5);
+
+	if (!$a = curl_exec($c))
+		{
+		echo curl_error($c)."\n";
+		return false;
+		}
+
+	if (($code = curl_getinfo($c, CURLINFO_HTTP_CODE)) >= 400)
+		{
+		echo 'HTTP error '.$code." for $url\n";
+		return false;
+		}
+
+	if (($size = curl_getinfo($c, CURLINFO_CONTENT_LENGTH_DOWNLOAD)) > UPLOAD_MAX_SIZE)
+		{
+		echo 'File bigger than '.round(UPLOAD_MAX_SIZE/1024/1024)."MB (".round(CURLINFO_CONTENT_LENGTH_DOWNLOAD/1024/1024)."MB)\n";
+		return false;
+		}
+
+	$content_types = array(
+		'image/gif' => 'gif',
+		'image/jpeg' => 'jpg',
+		'image/jpg' => 'jpg',
+		'image/png' => 'png',
+		'video/webm' => 'webm',
+	);
+	$content_type = curl_getinfo($c, CURLINFO_CONTENT_TYPE);
+	if (!isset($content_types[$content_type]))
+		{
+		echo "Content type not acceptable (".$content_type.")\n";
+		return false;
+		}
+	else
+		{
+		curl_setopt($c, CURLOPT_HEADER, false);
+		curl_setopt($c, CURLOPT_NOBODY, false);
+		curl_setopt($c, CURLOPT_HTTPGET, true);
+
+		if (!$image_data = curl_exec($c))
+			{
+			echo curl_error($c)."\n";
+			return false;
+			}
+		else
+			{
+			echo "Image downloaded (".strlen($image_data)." bytes)\n";
+			return $image_data;
+			}
+		}
+
+	return false;
+	}
+
 
 require_once dirname(__FILE__).'/db.inc.php';
 require_once dirname(__FILE__).'/site.inc.php';
