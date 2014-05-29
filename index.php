@@ -1,4 +1,6 @@
 <?php
+ini_set('session.use_cookies', '0');
+
 require 'inc/common.inc.php';
 
 $site = new Site("Sauf.ça");
