@@ -18,15 +18,24 @@ if (!$picture->load($picture_id)) {
 echo "Picture $picture_id found, posted on ".date("Y-m-d", $picture->date)." at ".date("H:i:s", $picture->date)."\n";
 
 if (!file_exists($picture->path)) {
-	echo "Local file not found, aborting.\n";
-	echo "\n";
-	echo "Run this instead:\n";
-	$tribune = new Tribune();
-	$tribune->load_by_id($picture->tribune_id);
-
-	echo "echo \"".str_replace('"', '\"', $picture->title)."\" | php upload.php ".$tribune->name." ".$tribune->url."\n";
-
-	exit();
+	echo "Local file not found...\n";
+	if ($picture->url) {
+		echo "Downloading again.\n";
+		if ($image_data = process_url($picture->url)) {
+			if ($picture->write($image_data)) {
+				$picture->update();
+				exit();
+			} else {
+				echo "Could not write image data to a file.\n";
+			}
+		} else {
+			echo "Could not download anything from ".$picture->url."\n";
+		}
+		exit();
+	} else {
+		echo "And no url on record, fix this manually.\n";
+		exit();
+	}
 }
 
 echo "Known content-type is ".$picture->type."\n";
