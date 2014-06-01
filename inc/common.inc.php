@@ -67,7 +67,7 @@ function process_url($url)
 
 	$referer = $details['scheme'].'://'.$details['host'];
 
-	curl_setopt($c, CURLOPT_USERAGENT, "Mozilla/5.0");
+	curl_setopt($c, CURLOPT_USERAGENT, "Mozilla/5.0 (X11; Linux x86_64; rv:29.0) Gecko/20100101 Firefox/29.0");
 	curl_setopt($c, CURLOPT_REFERER, $referer);
 	curl_setopt($c, CURLOPT_URL, $url);
 	curl_setopt($c, CURLOPT_HEADER, true);
