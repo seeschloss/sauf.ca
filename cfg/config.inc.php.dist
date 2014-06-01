@@ -1,0 +1,11 @@
+<?php
+
+$GLOBALS['config'] = array(
+	'db' => array(
+		'host' => 'localhost',
+		'database' => 'sauf',
+		'user' => 'root',
+		'password' => '',
+	),
+	'contact' => '<a href="mailto:see@sauf.ca">contact</a>',
+);

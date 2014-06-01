@@ -5,7 +5,12 @@ class DB
 
 	function __construct()
 		{
-		$this->resource = new mysqli("localhost", "root", "", "sauf");
+		$this->resource = new mysqli(
+			$GLOBALS['config']['db']['host'],
+			$GLOBALS['config']['db']['user'],
+			$GLOBALS['config']['db']['password'],
+			$GLOBALS['config']['db']['database']
+		);
 		$this->resource->set_charset("utf8");
 		}
 

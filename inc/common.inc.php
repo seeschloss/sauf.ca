@@ -1,5 +1,7 @@
 <?php
 
+require_once dirname(__FILE__).'/../cfg/config.inc.php';
+
 define("UPLOAD_DIR", "/home/seeschloss/sauf.ca/pictures");
 define("UPLOAD_MAX_SIZE", 55*1024*1024);
 define("NB_INITIAL_THUMBNAILS", 250);

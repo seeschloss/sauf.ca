@@ -2,5 +2,5 @@ pictures/*
 old
 .svn
 tags
-inc/db.inc.php
+cfg/config.inc.php
 *.swp
