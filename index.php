@@ -123,6 +123,7 @@ $content .= $site->viewer().'
 			</div>
 			<div id="information">
 				<span id="status">
+					<a id="contact-link" href="mailto:see@sauf.ca">contact</a>
 				</span>
 			</div>
 		</div>'

@@ -241,6 +241,8 @@ var showImageTags = function(image_id) {
 
 var lastScroll = 0;
 var viewerScrollHandler = function(e) {
+	e.stopPropagation();
+
 	var now = (new Date()).getTime();
 	if (now - lastScroll < 250) {
 		return;
@@ -358,7 +360,7 @@ var closeViewer = function() {
 
 var resetStatus = function() {
 	if (!document.querySelector('#viewer')) {
-		document.querySelector('#status').innerHTML = '';
+		document.querySelector('#status').innerHTML = '<a id="contact-link" href="mailto:see@sauf.ca">contact</a>';
 	}
 }
 

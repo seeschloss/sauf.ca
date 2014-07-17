@@ -445,3 +445,9 @@ a.thumbnail-link[data-animated^="http"]:hover:before
 	opacity: 0;
 	}
 
+#contact-link
+	{
+	margin-right: 10px;
+	float: right;
+	}
+
