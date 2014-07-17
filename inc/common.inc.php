@@ -63,6 +63,11 @@ function process_url($url)
 	{
 	$url = html_entity_decode($url);
 
+	if (preg_match('/https?:\/\/(www\.)?youtube.com\/[^.]*$/', $url)) {
+		$safe_url = escapeshellarg($url);
+		$url = `youtube-dl -g -f webm {$safe_url}`;
+	}
+
 	$details = parse_url($url);
 
 	$c = curl_init();
@@ -77,7 +82,7 @@ function process_url($url)
 	curl_setopt($c, CURLOPT_RETURNTRANSFER, true);
 	curl_setopt($c, CURLOPT_SSL_VERIFYPEER, false);
 	curl_setopt($c, CURLOPT_CONNECTTIMEOUT, 2);
-	curl_setopt($c, CURLOPT_TIMEOUT, 10);
+	curl_setopt($c, CURLOPT_TIMEOUT, 15);
 	curl_setopt($c, CURLOPT_AUTOREFERER, true);
 	curl_setopt($c, CURLOPT_FOLLOWLOCATION, true);
 	curl_setopt($c, CURLOPT_MAXREDIRS, 5);
