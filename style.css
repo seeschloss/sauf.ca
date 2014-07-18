@@ -214,6 +214,36 @@ a[data-tags~="nsfw"] img
 	vertical-align: middle;
 	max-height: 100%;
 	max-width: 100%;
+	display: inline-block;
+	}
+
+#viewer .picture .displayed-picture video
+	{
+	max-height: 100%;
+	max-width: 100%;
+	vertical-align: bottom;
+	}
+
+#viewer .picture .displayed-picture progress
+	{
+	width: 100%;
+	height: 1px;
+	vertical-align: top;
+	-webkit-appearance: none;
+	   -moz-appearance: none;
+	        appearance: none;
+	}
+
+#viewer .picture .displayed-picture progress::-webkit-progress-bar,
+#viewer .picture .displayed-picture progress::-moz-progress-bar,
+#viewer .picture .displayed-picture progress::progress-bar
+	{
+	background-color: grey;
+	}
+
+#viewer .picture .displayed-picture progress::-webkit-progress-value
+	{
+	background-color: blue;
 	}
 
 #viewer #arrow-left, #viewer #arrow-right

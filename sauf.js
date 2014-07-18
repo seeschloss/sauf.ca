@@ -138,6 +138,17 @@ var nextImage = function(image) {
 	return image.nextSibling;
 };
 
+var attachProgressUpdateHandler = function(video, progress) {
+	window.onresize = function() {
+		progress.style.maxWidth = video.clientWidth + 'px';
+	};
+
+	video.addEventListener('timeupdate', function() {
+		var percent = (100 / video.duration) * video.currentTime;
+		progress.value = percent;
+	}, false);
+};
+
 var showImage = function(image) {
 	if (document.querySelector('#viewer')) {
 		closeViewer();
@@ -177,16 +188,28 @@ var showImage = function(image) {
 	}
 	
 	if (image.dataset.src.match(/.webm$/)) {
+		var container = document.createElement('div');
+		container.className = 'video-container displayed-picture';
+
 		var video = document.createElement('video');
 		fullImageHandlers(video);
-		video.className = 'displayed-picture';
 		video.src = image.dataset.src;
 		video.autoplay = true;
 		video.muted = true;
 		video.controls = false;
 		video.loop = true;
 		video.dataset.pictureId = image.dataset.id;
-		picture.appendChild(video);
+		container.appendChild(video);
+
+		var progress = document.createElement('progress');
+		progress.value = 0;
+		progress.max = 100;
+		container.appendChild(progress);
+
+		attachProgressUpdateHandler(video, progress);
+
+		picture.appendChild(container);
+
 		video.focus();
 	} else {
 		var img = document.createElement('img');
@@ -844,6 +867,12 @@ if (picture) {
 	setTimeout(function() {
 		addWheelListener(document.querySelector('#viewer'), viewerScrollHandler);
 	}, 250);
+
+	var video = document.querySelector('#viewer .displayed-picture video');
+	var progress = document.querySelector('#viewer .displayed-picture progress');
+	if (video && progress) {
+		attachProgressUpdateHandler(video, progress);
+	}
 }
 
 setInterval(prependNewPictures, 5 * 60 * 1000);
