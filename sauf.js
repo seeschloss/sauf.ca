@@ -124,6 +124,7 @@ var fullImageHandlers = function(img) {
 
 		if (!this.className.match(/zoomable/)) {
 			closeViewer();
+			updateHistory();
 		} else {
 			toggleZoom();
 		}
@@ -150,15 +151,9 @@ var attachProgressUpdateHandler = function(video, progress) {
 };
 
 var showImage = function(image) {
-	if (document.querySelector('#viewer')) {
-		closeViewer();
-	}
-
+	closeViewer();
 	setCurrentImage(image);
-
-	if (history && history.pushState) {
-		history.pushState({image: image.dataset.id}, "Sauf.ça - " + image.dataset.url, "/+" + image.dataset.id);
-	}
+	updateHistory();
 
 	var viewer = document.createElement('div');
 	viewer.id = 'viewer';
@@ -248,6 +243,7 @@ var showImage = function(image) {
 
 	viewer.onclick = function() {
 		closeViewer();
+		updateHistory();
 	};
 
 	setTimeout(function() {
@@ -369,15 +365,17 @@ var markNsfw = function(image) {
 };
 
 var closeViewer = function() {
-	var viewer = document.querySelector('#viewer');
-	viewer.parentElement.removeChild(viewer);
+	currentImage = undefined;
 
-	if (history && history.pushState) {
-		if (currentTerm || currentAnimated) {
-			history.pushState({search: currentTerm, animated: currentAnimated}, "Sauf.ça", "/" + (currentAnimated ? '!' : '?') + currentTerm);
-		} else {
-			history.pushState({}, "Sauf.ça", "/");
-		}
+	var viewer = document.querySelector('#viewer');
+	if (viewer) {
+		viewer.parentElement.removeChild(viewer);
+	}
+
+	var zoom = document.querySelector('#zoom-overlay');
+	if (zoom) {
+		zoom.parentElement.removeChild(zoom);
+		document.querySelector('body').className = '';
 	}
 };
 
@@ -435,7 +433,7 @@ var showImageStatus = function(image) {
 			var year = date.getFullYear();
 			if (day   < 10) { day   = "0" + day;    }
 			if (month < 10) { month = "0" + month;  }
-			user.href = "http://bombefourchette.com/t/DLFP/" + year + "-" + month + "-" + day;
+			user.href = "http://bombefourchette.com/t/dlfp/" + year + "-" + month + "-" + day;
 			if (+image.dataset.postId > 0) {
 				user.href += "#" + image.dataset.postId;
 			}
@@ -472,6 +470,7 @@ var toggleZoom = function() {
 			document.querySelector('body').className = '';
 			zoomOverlay.parentElement.removeChild(zoomOverlay);
 			closeViewer();
+			updateHistory();
 		};
 
 		zoomOverlay.appendChild(img);
@@ -532,23 +531,36 @@ var setCurrentImage = function(image) {
 	}
 };
 
+var updateHistory = function() {
+	if (history && history.pushState) {
+		var title = "Sauf.ça";
+		var data = {};
+		var url = "/";
+
+		if (currentTerm || currentAnimated) {
+			data.search = currentTerm;
+			data.animated = currentAnimated;
+			url = "/" + (currentAnimated ? '!' : '?') + currentTerm;
+		}
+
+		if (currentImage) {
+			data.image = currentImage.dataset.id;
+			url = "/+" + currentImage.dataset.id;
+		}
+
+		if (JSON.stringify(history.state) != JSON.stringify(data)) {
+			history.pushState(data, title, url);
+		}
+	}
+};
+
 var performSearch = function(term, animated) {
 	currentTerm = term;
 	currentAnimated = animated;
 	if (term == "" && !animated) {
-		if (history && history.pushState) {
-			history.pushState({}, "Sauf.ça", "/");
-		}
 		return resetToLatest();
 	}
 
-	if (history && history.pushState) {
-		if (animated) {
-			history.pushState({search: term, animated: true}, "Sauf.ça", "/!" + term);
-		} else {
-			history.pushState({search: term, animated: false}, "Sauf.ça", "/?" + term);
-		}
-	}
 	var uri = 'http://sauf.ca/latest.json?count=250&search=' + encodeURIComponent(term);
 	if (animated) {
 		uri += '&animated=1';
@@ -740,12 +752,7 @@ document.querySelector('body').onkeydown = function(e) {
 				var viewer = document.querySelector('#viewer');
 				if (viewer) {
 					closeViewer();
-
-					var zoom = document.querySelector('#zoom-overlay');
-					if (zoom) {
-						zoom.parentElement.removeChild(zoom);
-						document.querySelector('body').className = '';
-					}
+					updateHistory();
 				} else {
 					showImage(currentImage);
 				}
@@ -755,12 +762,7 @@ document.querySelector('body').onkeydown = function(e) {
 			var viewer = document.querySelector('#viewer');
 			if (viewer) {
 				closeViewer();
-			}
-
-			var zoom = document.querySelector('#zoom-overlay');
-			if (zoom) {
-				zoom.parentElement.removeChild(zoom);
-				document.querySelector('body').className = '';
+				updateHistory();
 			}
 			break;
 		case 32: // space
@@ -862,6 +864,7 @@ if (picture) {
 	fullImageHandlers(picture);
 	document.querySelector('#viewer').onclick = function() {
 		closeViewer();
+		updateHistory();
 	};
 	setCurrentImage(image);
 	setTimeout(function() {
@@ -891,6 +894,7 @@ document.querySelector('#search input[type="checkbox"]').onchange = function(e) 
 	e.preventDefault();
 	e.stopPropagation();
 	performSearch(this.parentElement.search.value, this.parentElement.animated.checked);
+	updateHistory();
 };
 
 document.querySelector('#search').onkeydown = function(e) {
@@ -901,6 +905,7 @@ document.querySelector('#search').onsubmit = function(e) {
 	e.preventDefault();
 	e.stopPropagation();
 	performSearch(this.search.value, this.animated.checked);
+	updateHistory();
 };
 
 if (document.location.pathname.substr(0, 2) == "/!") {
@@ -914,19 +919,6 @@ if (document.location.pathname.substr(0, 2) == "/!") {
 	currentTerm = document.querySelector('#search input[type="search"]').value;
 	currentAnimated = false;
 }
-
-// hmm
-window.onpopstate = function() {
-	if (document.location.pathname.substr(0, 2) == "/!") {
-		document.querySelector('#search input[type="checkbox"]').checked = true;
-		document.querySelector('#search input[type="search"]').value = decodeURIComponent(document.location.pathname.substr(2));
-		performSearch(document.querySelector('#search input[type="search"]').value, true);
-	} else if (document.location.search.substr(0, 1) == "?") {
-		document.querySelector('#search input[type="checkbox"]').checked = false;
-		document.querySelector('#search input[type="search"]').value = decodeURIComponent(document.location.search.substr(1));
-		performSearch(document.querySelector('#search input[type="search"]').value, false);
-	}
-};
 
 var left = document.querySelector('#arrow-left');
 if (left) {
@@ -949,12 +941,34 @@ if (right) {
 }
 
 window.onpopstate = function(e) {
-	if (document.location.pathname.match(/^\/+/)) {
-		var image_id = document.location.pathname.substr(2);
-		var image = document.querySelector('#thumbnail-' + image_id);
+	var needsSearch = false;
+
+	if (history.state.search != undefined || history.state.search != currentTerm) {
+		needsSearch = true;
+		currentTerm = history.state.search ? history.state.search : "";
+		document.querySelector('#search input[type="search"]').value = currentTerm ? currentTerm : "";
+	} else {
+		document.querySelector('#search input[type="search"]').value = "";
+	}
+	
+	if (history.state.animated != undefined || history.state.animated != currentAnimated) {
+		needsSearch = true;
+		currentAnimated = history.state.animated ? history.state.animated : false;
+		document.querySelector('#search input[type="checkbox"]').checked = currentAnimated ? currentAnimated : false;
+	} else {
+		document.querySelector('#search input[type="checkbox"]').checked = false;
+	}
+	
+	if (history.state.image != undefined) {
+		currentImage = document.querySelector('#thumbnail-' + history.state.image);
 		if (image) {
-			showImage(image);
+			showImage(currentImage);
 		}
+	} else if (needsSearch || currentTerm || currentAnimated) {
+		closeViewer();
+		performSearch(currentTerm, currentAnimated);
+	} else {
+		closeViewer();
 	}
 };
 
