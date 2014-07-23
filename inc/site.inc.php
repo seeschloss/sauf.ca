@@ -154,12 +154,12 @@ class Site
 		<div class='extra'>
 		</div>
 		<div class='picture'>
-			{$arrow_left}
 			<div class='video-container displayed-picture'>
+				{$arrow_left}
 				<video muted autoplay loop src='{$src}' data-picture-id='{$picture->id}'></video>
-				<progress value='0' max='100' />
+				{$arrow_right}
+				<progress value='0' max='100'></progress>
 			</div>
-			{$arrow_right}
 		</div>
 		<div class='info'>
 		</div>
@@ -273,7 +273,7 @@ HTML;
 		<head>
 		<meta name="verify-v1" content="n17g0PlfuQUJL57geBEf7j+Nc22f+1pPdcvM2HWTX1c=" />
 			<title>'.htmlspecialchars($title).'</title>
-			<link rel="stylesheet" type="text/css" href="style.2.css" />
+			<link rel="stylesheet" type="text/css" href="style.3.css" />
 		</head>
 		<body>';
 		}
@@ -281,7 +281,7 @@ HTML;
 	function foot()
 		{
 		return '
-			<script type="text/javascript" src="sauf.1.js"></script>
+			<script type="text/javascript" src="sauf.2.js"></script>
 		</body>
 	</html>';
 		}

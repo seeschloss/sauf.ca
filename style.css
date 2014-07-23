@@ -221,7 +221,7 @@ a[data-tags~="nsfw"] img
 	{
 	max-height: 100%;
 	max-width: 100%;
-	vertical-align: bottom;
+	vertical-align: middle;
 	}
 
 #viewer .picture .displayed-picture progress
@@ -232,6 +232,22 @@ a[data-tags~="nsfw"] img
 	-webkit-appearance: none;
 	   -moz-appearance: none;
 	        appearance: none;
+
+	-webkit-transition: height 0.2s;
+	   -moz-transition: height 0.2s;
+	        transition: height 0.2s;
+
+	cursor: ew-resize;
+	}
+
+#viewer .picture .displayed-picture:hover progress
+	{
+	height: 3px;
+	}
+
+#viewer .picture .displayed-picture progress:hover
+	{
+	height: 6px;
 	}
 
 #viewer .picture .displayed-picture progress::-webkit-progress-bar,
@@ -253,25 +269,23 @@ a[data-tags~="nsfw"] img
 	font-weight: bold;
 	font-family: serif;
 	font-size: 70px;
-	padding: 10px;
 	width: 70px;
+	padding: 20px 0;
 	position: relative;
 	z-index: 10;
 	text-shadow: 0 0 10px black, 1px 1px 1px black, 1px -1px 1px black, -1px 1px 1px black, -1px -1px 1px black;
 	opacity: 0;
-	padding-top: 100%;
-	padding-bottom: 100%;
 	transition: opacity 0.2s;
 	}
 
 #viewer #arrow-left
 	{
-	margin-right: -70px;
+	margin-right: -50px;
 	}
 
 #viewer #arrow-right
 	{
-	margin-left: -70px;
+	margin-left: -50px;
 	}
 
 #viewer a:hover

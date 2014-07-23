@@ -148,6 +148,20 @@ var attachProgressUpdateHandler = function(video, progress) {
 		var percent = (100 / video.duration) * video.currentTime;
 		progress.value = percent;
 	}, false);
+
+	progress.addEventListener('click', function(e) {
+		e.preventDefault();
+		e.stopPropagation();
+
+		var start = this.getClientRects()[0].left;
+		var stop = this.getClientRects()[0].right;
+
+		var click = e.x;
+
+		var position = (e.x - start) / (stop - start);
+
+		video.currentTime = video.duration * position;
+	});
 };
 
 var showImage = function(image) {
@@ -170,7 +184,6 @@ var showImage = function(image) {
 	left.innerHTML = '<';
 	left.id = 'arrow-left';
 	left.href = "";
-	picture.appendChild(left);
 	if (!previousImage(image)) {
 		left.className = 'hidden';
 	} else {
@@ -181,10 +194,28 @@ var showImage = function(image) {
 			}
 		};
 	}
+
+	var right = document.createElement('a');
+	right.id = 'arrow-right';
+	right.innerHTML = '>';
+	right.href = "";
+	picture.appendChild(right);
+	if (!nextImage(image)) {
+		right.className = 'hidden';
+	} else {
+		right.onclick = function(e) {
+			e.preventDefault(); e.stopPropagation(); advanceCurrentImage();
+			if (currentImage && document.querySelector('#viewer')) {
+				showImage(currentImage);picture
+			}
+		};
+	}
 	
 	if (image.dataset.src.match(/.webm$/)) {
 		var container = document.createElement('div');
 		container.className = 'video-container displayed-picture';
+
+		container.appendChild(left);
 
 		var video = document.createElement('video');
 		fullImageHandlers(video);
@@ -195,6 +226,8 @@ var showImage = function(image) {
 		video.loop = true;
 		video.dataset.pictureId = image.dataset.id;
 		container.appendChild(video);
+
+		container.appendChild(right);
 
 		var progress = document.createElement('progress');
 		progress.value = 0;
@@ -212,24 +245,10 @@ var showImage = function(image) {
 		img.className = 'displayed-picture zoomable';
 		img.src = image.dataset.src;
 		img.dataset.pictureId = image.dataset.id;
+		picture.appendChild(left);
 		picture.appendChild(img);
+		picture.appendChild(right);
 		img.focus();
-	}
-
-	var right = document.createElement('a');
-	right.id = 'arrow-right';
-	right.innerHTML = '>';
-	right.href = "";
-	picture.appendChild(right);
-	if (!nextImage(image)) {
-		right.className = 'hidden';
-	} else {
-		right.onclick = function(e) {
-			e.preventDefault(); e.stopPropagation(); advanceCurrentImage();
-			if (currentImage && document.querySelector('#viewer')) {
-				showImage(currentImage);
-			}
-		};
 	}
 
 	showImageStatus(image);
