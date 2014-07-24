@@ -226,9 +226,11 @@ a[data-tags~="nsfw"] img
 
 #viewer .picture .displayed-picture progress
 	{
+	border: none;
 	width: 100%;
-	height: 1px;
+	height: 2px;
 	vertical-align: top;
+
 	-webkit-appearance: none;
 	   -moz-appearance: none;
 	        appearance: none;
@@ -242,12 +244,12 @@ a[data-tags~="nsfw"] img
 
 #viewer .picture .displayed-picture:hover progress
 	{
-	height: 3px;
+	height: 4px;
 	}
 
 #viewer .picture .displayed-picture progress:hover
 	{
-	height: 6px;
+	height: 7px;
 	}
 
 #viewer .picture .displayed-picture progress::-webkit-progress-bar,

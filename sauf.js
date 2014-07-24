@@ -140,6 +140,10 @@ var nextImage = function(image) {
 };
 
 var attachProgressUpdateHandler = function(video, progress) {
+	video.addEventListener('canplay', function() {
+		progress.style.maxWidth = video.clientWidth + 'px';
+	});
+
 	window.onresize = function() {
 		progress.style.maxWidth = video.clientWidth + 'px';
 	};
@@ -156,11 +160,9 @@ var attachProgressUpdateHandler = function(video, progress) {
 		var start = this.getClientRects()[0].left;
 		var stop = this.getClientRects()[0].right;
 
-		var click = e.x;
+		var position = (e.clientX - start) / (stop - start);
 
-		var position = (e.x - start) / (stop - start);
-
-		video.currentTime = video.duration * position;
+		video.currentTime = Math.round(video.duration * position * 100) / 100;
 	});
 };
 
@@ -272,7 +274,7 @@ var showImage = function(image) {
 
 var showImageTags = function(image_id) {
 	var image = document.querySelector('#thumbnails a[data-id="' + image_id + '"]');
-	if (image) {
+	if (image && document.querySelector('#viewer .image-label span')) {
 		document.querySelector('#viewer .image-label span').innerHTML += " " + image.dataset.tags;
 	}
 };
@@ -342,6 +344,7 @@ var startAnimation = function(image) {
 			video.muted = true;
 			video.controls = false;
 			video.loop = true;
+			video.playbackRate = 2;
 			video.poster = image.dataset.thumbnailSrc;
 			image.removeChild(image.firstChild);
 			image.appendChild(video);
