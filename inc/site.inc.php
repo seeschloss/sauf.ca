@@ -155,10 +155,7 @@ class Site
 		</div>
 		<div class='picture'>
 			<div class='video-container displayed-picture'>
-				{$arrow_left}
-				<video muted autoplay loop src='{$src}' data-picture-id='{$picture->id}'></video>
-				{$arrow_right}
-				<progress value='0' max='100'></progress>
+				{$arrow_left}<video muted autoplay loop src='{$src}' data-picture-id='{$picture->id}'></video>{$arrow_right}
 			</div>
 		</div>
 		<div class='info'>

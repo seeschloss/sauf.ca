@@ -271,23 +271,25 @@ a[data-tags~="nsfw"] img
 	font-weight: bold;
 	font-family: serif;
 	font-size: 70px;
-	width: 70px;
 	padding: 20px 0;
 	position: relative;
 	z-index: 10;
 	text-shadow: 0 0 10px black, 1px 1px 1px black, 1px -1px 1px black, -1px 1px 1px black, -1px -1px 1px black;
 	opacity: 0;
 	transition: opacity 0.2s;
+	display: inline-block;
+	width: 60px;
+	text-align: center;
 	}
 
 #viewer #arrow-left
 	{
-	margin-right: -50px;
+	margin-right: -60px;
 	}
 
 #viewer #arrow-right
 	{
-	margin-left: -50px;
+	margin-left: -60px;
 	}
 
 #viewer a:hover

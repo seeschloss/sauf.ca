@@ -894,8 +894,13 @@ if (picture) {
 	}, 250);
 
 	var video = document.querySelector('#viewer .displayed-picture video');
-	var progress = document.querySelector('#viewer .displayed-picture progress');
-	if (video && progress) {
+	if (video) {
+		var progress = document.createElement('progress');
+
+		progress.value = 0;
+		progress.max = 100;
+		picture.appendChild(progress);
+
 		attachProgressUpdateHandler(video, progress);
 	}
 }
