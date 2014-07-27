@@ -39,6 +39,11 @@ function search_condition($search)
 
 function url($path, $random = false)
 	{
+	if (strpos($_SERVER['HTTP_HOST'], 'sauf.ca') === FALSE)
+		{
+		return $path;
+		}
+
 	if ($random)
 		{
 		$SERVERS = array
@@ -66,7 +71,13 @@ function process_url($url)
 	if (preg_match('/https?:\/\/(www\.)?youtube.com\/[^.]*$/', $url)) {
 		$safe_url = escapeshellarg($url);
 		$url = `youtube-dl -g -f webm {$safe_url}`;
+	} elseif (false && preg_match('/https?:\/\/([a-z])*\.wikipedia\.org\/wiki\/File:(.)*$/', $url, $matches)) {
+		// Needs some testing
+		$filename = $matches[2];
+		$md5 = md5($filename);
+		$url = 'https://upload.wikimedia.org/wikipedia/commons/' . substr($md5, 0, 1) . '/' . substr($md5, 0, 2) . '/' . $filename;
 	}
+
 
 	$details = parse_url($url);
 

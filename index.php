@@ -1,6 +1,10 @@
 <?php
 ini_set('session.use_cookies', '0');
 
+if (!empty($_GET['search'])) {
+	header('Location: /?' . urlencode($_GET['search']));
+}
+
 require 'inc/common.inc.php';
 
 $site = new Site("Sauf.ça");
@@ -65,6 +69,8 @@ if (strpos($_SERVER['REQUEST_URI'], '/latest.json') === 0) {
 	}
 } else if (strpos($_SERVER['REQUEST_URI'], '/?') === 0) {
 } else if (strpos($_SERVER['REQUEST_URI'], '/!') === 0) {
+} else if (strpos($_SERVER['REQUEST_URI'], '/*') === 0) {
+	$_SERVER['REQUEST_URI'] = '/';
 } else if (strlen($_SERVER['REQUEST_URI']) > 1) {
 	header('HTTP/1.0 404 Not Found');
 	header('Content-Type: text/plain');
