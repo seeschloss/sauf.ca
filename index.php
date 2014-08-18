@@ -1,7 +1,7 @@
 <?php
 ini_set('session.use_cookies', '0');
 
-if (!empty($_GET['search'])) {
+if (strpos($_SERVER['REQUEST_URI'], '/latest.json') !== 0 and !empty($_GET['search'])) {
 	header('Location: /?' . urlencode($_GET['search']));
 }
 
