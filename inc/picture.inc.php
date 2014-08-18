@@ -340,6 +340,23 @@ class Picture
 
 			list($width_orig, $height_orig, $image_type) = getimagesize($tmp);
 			$im = imagecreatefromjpeg($tmp);
+
+			$tmp_img = imagecreatetruecolor(1, 1);
+			imagecopyresampled($tmp_img, $im, 0, 0, 0, 0, 1, 1, $x, $y);
+			$rgb = imagecolorat($tmp_img, 0, 0);
+
+			if ($rgb == 0)
+				{
+				$length = `ffprobe -i {$this->path} -show_format 2>/dev/null | grep duration | sed 's/duration=//'`;
+
+				$skip = str_pad(min(10, $length/10), 2, '0', STR_PAD_LEFT);
+
+				unlink($tmp);
+				`ffmpeg -i "{$this->path}" -ss '00:00:{$skip}' -frames 1 "{$tmp}" &>/dev/null`;
+				list($width_orig, $height_orig, $image_type) = getimagesize($tmp);
+				$im = imagecreatefromjpeg($tmp);
+				}
+
 			unlink($tmp);
 			}
 		else
