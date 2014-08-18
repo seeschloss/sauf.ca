@@ -459,6 +459,19 @@ var showImageStatus = function(image) {
 			if (+image.dataset.postId > 0) {
 				user.href += "#" + image.dataset.postId;
 			}
+		} else if (image.dataset.tribuneName == "euromussels") {
+			// bombefourchette.com history here
+			var date = new Date(+image.dataset.date * 1000);
+
+			var day = date.getDate();
+			var month = date.getMonth() + 1;
+			var year = date.getFullYear();
+			if (day   < 10) { day   = "0" + day;    }
+			if (month < 10) { month = "0" + month;  }
+			user.href = "http://bombefourchette.com/t/euromussels/" + year + "-" + month + "-" + day;
+			if (+image.dataset.postId > 0) {
+				user.href += "#" + image.dataset.postId;
+			}
 		}
 		user.innerHTML = image.dataset.userName;
 		status.appendChild(user);
