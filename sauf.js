@@ -428,6 +428,35 @@ var showImageStatus = function(image) {
 		status.appendChild(link);
 	}
 
+	var bloubs = document.createElement('a');
+	bloubs.className = 'doublons hidden';
+	bloubs.href = '=' + image.dataset.md5;
+	bloubs.innerHTML = 'Doublons';
+	status.appendChild(bloubs);
+
+	var req = new XMLHttpRequest();
+	req.open('GET', 'bloubs.json?picture=' + image.dataset.id, true);
+	req.onreadystatechange = function(e) {
+		if (req.readyState == 4) {
+			if (req.status == 200 || req.status == 0) {
+				var data = null;
+				if (data = JSON.parse(req.responseText)) {
+					var nbloubs = data[image.dataset.id];
+					if (nbloubs > 1) {
+						nbloubs -= 1;
+						bloubs.className = 'doublons';
+						if (nbloubs > 1) {
+							bloubs.innerHTML = nbloubs + ' doublons';
+						} else {
+							bloubs.innerHTML = nbloubs + ' doublon';
+						}
+					}
+				}
+			}
+		}
+	};
+	req.send(null);
+
 	var google = document.createElement('a');
 	google.className = 'google';
 	google.href = 'https://www.google.com/searchbyimage?hl=en&safe=off&site=search&image_url=' + image.dataset.url;
@@ -725,6 +754,7 @@ var appendNewPicture = function(data) {
 	link.dataset.date = data['date'];
 	link.dataset.id = data['id'];
 	link.dataset.tags = data['tags'].join(', ');
+	link.dataset.md5 = data['md5'];
 
 	var img = document.createElement('img');
 	img.height = '100';
@@ -763,6 +793,7 @@ var prependNewPicture = function(data) {
 	link.dataset.date = data['date'];
 	link.dataset.id = data['id'];
 	link.dataset.tags = data['tags'].join(', ');
+	link.dataset.md5 = data['md5'];
 
 	var img = document.createElement('img');
 	img.src = link.dataset.thumbnailSrc;

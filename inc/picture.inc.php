@@ -14,6 +14,7 @@ class Picture
 	public $tribune_id = 0;
 	public $post_id = 0;
 	public $tags = "";
+	public $raw_tags = "";
 	public $animated = 0;
 	public $type = '';
 	public $md5 = '';
@@ -50,26 +51,37 @@ class Picture
 		return $this->id;
 		}
 
+	function load_by_id($id)
+		{
+		$data = array();
+		$db = new DB();
+
+		$query = 'SELECT p.*, t.name as tribune_name, t.url as tribune_url
+			FROM pictures p
+			LEFT JOIN tribunes t
+			  ON p.tribune_id = t.id
+			WHERE p.id = '.(int)$id
+			;
+		$result = $db->query($query);
+
+		if ($result) while ($row = $result->fetch_assoc())
+			{
+			$data = $row;
+			}
+
+		foreach ($data as $key => $value)
+			{
+			$this->{$key} = $value;
+			}
+
+		return $this->id;
+		}
+
 	function load($data)
 		{
 		if (!is_array($data))
 			{
-			$id = (int)$data;
-			$data = array();
-			$db = new DB();
-
-			$query = 'SELECT p.*, t.name as tribune_name, t.url as tribune_url
-				FROM pictures p
-				LEFT JOIN tribunes t
-				  ON p.tribune_id = t.id
-				WHERE p.id = '.(int)$id
-				;
-			$result = $db->query($query);
-
-			if ($result) while ($row = $result->fetch_assoc())
-				{
-				$data = $row;
-				}
+			return $this->load_by_id((int)$data);
 			}
 
 		foreach ($data as $key => $value)
@@ -122,6 +134,7 @@ class Picture
 			'src' => url(PICTURES_PREFIX.'/'.$this->src, true),
 			'thumbnail-src' => url(PICTURES_PREFIX.'/'.$this->thumbnail_src, true),
 			'animated' => '',
+			'md5' => $this->md5,
 			);
 
 		if ($this->animated)
@@ -130,6 +143,16 @@ class Picture
 			}
 
 		return $array;
+		}
+
+	function bloubs()
+		{
+		$db = new DB();
+		$query = "SELECT COUNT(*)
+			FROM pictures p
+			WHERE p.md5 = '".$db->escape($this->md5)."'"
+			;
+		return (int)$db->value($query);
 		}
 
 	function write($data)
@@ -228,6 +251,7 @@ class Picture
 			tribune_id = \''.$db->escape($this->tribune_id).'\',
 			post_id = \''.$db->escape($this->post_id).'\',
 			tags = \''.$db->escape($this->tags).'\',
+			raw_tags = \''.$db->escape($this->raw_tags).'\',
 			user = \''.$db->escape($this->user).'\',
 			type = \''.$db->escape($this->type).'\',
 			md5 = \''.$db->escape($this->md5).'\',
@@ -259,6 +283,7 @@ class Picture
 				tribune_id = \''.$db->escape($this->tribune_id).'\',
 				post_id = \''.$db->escape($this->post_id).'\',
 				tags = \''.$db->escape($this->tags).'\',
+				raw_tags = \''.$db->escape($this->raw_tags).'\',
 				user = \''.$db->escape($this->user).'\',
 				type = \''.$db->escape($this->type).'\',
 				md5 = \''.$db->escape($this->md5).'\',
@@ -276,8 +301,19 @@ class Picture
 
 	function find_tags()
 		{
-		$path = $this->path;
-		$this->tags = `curl --silent -XPOST -F numberOfKeywords=5 -F "File=@$path" "http://viscomp1.f4.htw-berlin.de/tomcat/akiwi/AkiwiServlet?ajax=1.4" | jshon -e keywords -a -e word -u`;
+		if ($this->type == 'video/webm')
+			{
+			$path = $this->thumbnail_path;
+			}
+		else
+			{
+			$path = $this->path;
+			}
+		$tags = `curl --silent -XPOST -F numberOfKeywords=5 -F "File=@$path" "http://viscomp1.f4.htw-berlin.de/tomcat/akiwi/AkiwiServlet?ajax=1.4" | jshon -e keywords -a -e word -u`;
+
+		$tags = implode(' ', explode("\n", $tags));
+
+		return $tags;
 		}
 
 	function user() {
@@ -307,6 +343,7 @@ class Picture
 					' data-tribune-name="'.htmlspecialchars($this->tribune_name).'"'.
 					' data-tribune-url="'.htmlspecialchars($this->tribune_url).'"'.
 					' data-post-id="'.htmlspecialchars($this->post_id).'"'.
+					' data-md5="'.htmlspecialchars($this->md5).'"'.
 					' data-src="'.url(PICTURES_PREFIX.'/'.$this->src, true).'"'.
 					$extra.
 					'>'.

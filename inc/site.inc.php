@@ -121,10 +121,6 @@ class Site
 	function viewer()
 		{
 		$uri = substr($_SERVER['REQUEST_URI'], 1);
-		if ($n = strpos($uri, '?'))
-			{
-			$uri = substr($uri, 0, $n);
-			}
 
 		if ($uri[0] == '+')
 			{
@@ -203,6 +199,11 @@ HTML;
 			$term = substr($uri, 1);
 			$where .= ' AND '.search_condition($term);
 			$where .= ' AND animated';
+			}
+		else if (strpos($uri, '=') === 0)
+			{
+			$term = substr($uri, 1);
+			$where .= " AND md5='".$db->escape($term)."'";
 			}
 
 		$pictures = array();

@@ -24,6 +24,16 @@ if (strpos($_SERVER['REQUEST_URI'], '/latest.json') === 0) {
 
 	print $site->tags_json($_GET['picture']);
 	exit();
+} else if (strpos($_SERVER['REQUEST_URI'], '/bloubs.json') === 0) {
+	header('Content-Type: application/json');
+
+	$picture = new Picture();
+	if ($picture->load($_GET['picture'])) {
+		print json_encode(array(
+			$picture->id => $picture->bloubs(),
+		));
+	}
+	exit();
 } else if (strpos($_SERVER['REQUEST_URI'], '/nsfw.json') === 0) {
 	header('Content-Type: application/json');
 
@@ -68,6 +78,7 @@ if (strpos($_SERVER['REQUEST_URI'], '/latest.json') === 0) {
 		die();
 	}
 } else if (strpos($_SERVER['REQUEST_URI'], '/?') === 0) {
+} else if (strpos($_SERVER['REQUEST_URI'], '/=') === 0) {
 } else if (strpos($_SERVER['REQUEST_URI'], '/!') === 0) {
 } else if (strpos($_SERVER['REQUEST_URI'], '/*') === 0) {
 	$_SERVER['REQUEST_URI'] = '/';

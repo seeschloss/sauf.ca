@@ -1,3 +1,8 @@
+.hidden
+	{
+display: none;
+	}
+
 body
 	{
 	margin: 0;
@@ -391,6 +396,11 @@ a[data-tags~="nsfw"] img
 	}
 
 #information #status .link
+	{
+	margin-left: 1em;
+	}
+
+#information #status .doublons
 	{
 	margin-left: 1em;
 	}

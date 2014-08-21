@@ -28,7 +28,7 @@ function search_condition($search)
 		else
 			{
 			$term = $db->escape($term);
-			$condition = "p.user LIKE '$term%' OR p.title LIKE '%$term%' OR p.url LIKE '%$term%' OR p.tags LIKE '%$term%'";
+			$condition = "p.user LIKE '$term%' OR p.title LIKE '%$term%' OR p.url LIKE '%$term%' OR p.tags LIKE '%$term%' OR p.raw_tags LIKE '%$term%'";
 			}
 
 		$conditions[] = "(".$condition.")";

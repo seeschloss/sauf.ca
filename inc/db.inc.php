@@ -19,6 +19,17 @@ class DB
 		return $this->resource->query($query);
 		}
 
+	function value($query)
+		{
+		$result = $this->query($query);
+		if ($result) while ($row = $result->fetch_array())
+			{
+			return $row[0];
+			}
+
+		return '';
+		}
+
 	function escape($string)
 		{
 		return $this->resource->real_escape_string($string);
