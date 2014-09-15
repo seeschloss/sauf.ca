@@ -72,7 +72,7 @@ while ($line = fgets($f))
 			if ($picture->write($image_data))
 				{
 				trigger_error('Picture written');
-				//$picture->find_tags();
+				$picture->raw_tags = $picture->find_tags();
 				$picture->insert();
 				trigger_error('Picture saved');
 				echo "Image saved\n";
