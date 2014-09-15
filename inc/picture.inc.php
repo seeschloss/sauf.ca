@@ -319,7 +319,7 @@ class Picture
 			{
 			$path = $this->path;
 			}
-		$tags = `curl --user-agent "Mozilla/5.0 (Windows NT 6.1; rv:6.0.2) Gecko/20100101 Firefox/6.0.2" --silent -XPOST -F numberOfKeywords=5 -F "File=@$path" "http://viscomp1.f4.htw-berlin.de/tomcat/akiwi/AkiwiServlet?ajax=1.4" | jshon -e keywords -a -e word -u`;
+		$tags = `curl --user-agent "Mozilla/5.0 (Windows NT 6.1; rv:6.0.2) Gecko/20100101 Firefox/6.0.2" --silent -XPOST -F numberOfKeywords=5 -F "File=@$path" "http://viscomp1.f4.htw-berlin.de/tomcat/akiwi/AkiwiServlet?ajax=1.4" --referer "http://viscomp1.f4.htw-berlin.de/tomcat/akiwi/AkiwiServlet" | jshon -e keywords -a -e word -u`;
 
 		$tags = implode(' ', explode("\n", $tags));
 

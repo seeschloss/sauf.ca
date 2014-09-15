@@ -128,6 +128,9 @@ $content .= $site->viewer().'
 						<li>
 							<code>[espace]</code> afficher l\'image en grand
 						</li>
+						<li>
+							<code>t</code> afficher les commentaires d\'une image
+						</li>
 					</ul>
 				</div>
 			</div>

@@ -285,7 +285,7 @@ HTML;
 	function foot()
 		{
 		return '
-			<script type="text/javascript" src="sauf.2.js"></script>
+			<script type="text/javascript" src="sauf.3.js"></script>
 		</body>
 	</html>';
 		}

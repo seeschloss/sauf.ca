@@ -289,7 +289,18 @@ var toggleComments = function(image) {
 		setTimeout(function() {
 			panel.remove();
 		}, 500);
+
+		if (document.querySelector('#show-comments')) {
+			var arrow = document.querySelector('#show-comments');
+			arrow.className = 'up';
+		}
+
 		return;
+	}
+
+	if (document.querySelector('#show-comments')) {
+		var arrow = document.querySelector('#show-comments');
+		arrow.className = 'down';
 	}
 
 	var panel = document.createElement('div');
@@ -663,6 +674,18 @@ var showImageStatus = function(image) {
 	title.className = 'title';
 	title.innerHTML = image.dataset.title;
 	status.appendChild(title);
+
+	if (currentImage && image.dataset.tribuneName == "dlfp") {
+		var upArrow = document.createElement('span');
+		upArrow.id = 'show-comments';
+		upArrow.className = 'up';
+		upArrow.innerHTML = '▲';
+		status.appendChild(upArrow);
+
+		upArrow.onclick = function(e) {
+			toggleComments(currentImage);
+		};
+	}
 };
 
 var toggleZoom = function() {
