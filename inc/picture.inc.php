@@ -18,6 +18,7 @@ class Picture
 	public $animated = 0;
 	public $type = '';
 	public $md5 = '';
+	public $doublons = null;
 
 	public $new = false;
 
@@ -135,6 +136,7 @@ class Picture
 			'thumbnail-src' => url(PICTURES_PREFIX.'/'.$this->thumbnail_src, true),
 			'animated' => '',
 			'md5' => $this->md5,
+			'bloubs' => $this->doublons,
 			);
 
 		if ($this->animated)
@@ -152,7 +154,15 @@ class Picture
 			FROM pictures p
 			WHERE p.md5 = '".$db->escape($this->md5)."'"
 			;
-		return (int)$db->value($query);
+		$bloubs = (int)$db->value($query);
+
+		$query = "UPDATE pictures p
+			SET doublons = ".(int)$bloubs."
+			WHERE p.md5 = '".$db->escape($this->md5)."'"
+			;
+		$db->query($query);
+
+		return $bloubs;
 		}
 
 	function write($data)
@@ -309,7 +319,7 @@ class Picture
 			{
 			$path = $this->path;
 			}
-		$tags = `curl --silent -XPOST -F numberOfKeywords=5 -F "File=@$path" "http://viscomp1.f4.htw-berlin.de/tomcat/akiwi/AkiwiServlet?ajax=1.4" | jshon -e keywords -a -e word -u`;
+		$tags = `curl --user-agent "Mozilla/5.0 (Windows NT 6.1; rv:6.0.2) Gecko/20100101 Firefox/6.0.2" --silent -XPOST -F numberOfKeywords=5 -F "File=@$path" "http://viscomp1.f4.htw-berlin.de/tomcat/akiwi/AkiwiServlet?ajax=1.4" | jshon -e keywords -a -e word -u`;
 
 		$tags = implode(' ', explode("\n", $tags));
 
@@ -327,7 +337,12 @@ class Picture
 		$extra = '';
 		if ($this->animated)
 			{
-			$extra .= 'data-animated="'.$this->animated_src().'"';
+			$extra .= ' data-animated="'.$this->animated_src().'"';
+			}
+
+		if ($this->doublons !== null)
+			{
+			$extra .= ' data-bloubs="'.(int)$this->doublons.'"';
 			}
 
 		$src = url(PICTURES_PREFIX.'/'.$this->thumbnail_src, true);

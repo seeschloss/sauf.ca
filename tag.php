@@ -11,6 +11,7 @@ if (!$argv)
 $db = new DB();
 $query = 'SELECT p.*
 	FROM pictures p
+	WHERE raw_tags = \'\'
 ';
 $result = $db->query($query);
 

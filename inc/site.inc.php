@@ -150,11 +150,13 @@ class Site
 		<div class='extra'>
 		</div>
 		<div class='picture'>
-			<div class='video-container displayed-picture'>
-				{$arrow_left}<video muted autoplay loop src='{$src}' data-picture-id='{$picture->id}'></video>{$arrow_right}
+			<div class='row'>
+				<div class='video-container displayed-picture'>
+					{$arrow_left}<video class='media' muted autoplay loop src='{$src}' data-picture-id='{$picture->id}'></video>{$arrow_right}
+				</div>
 			</div>
-		</div>
-		<div class='info'>
+			<div class='info'>
+			</div>
 		</div>
 	</div>
 HTML;
@@ -166,11 +168,15 @@ HTML;
 		<div class='extra'>
 		</div>
 		<div class='picture'>
-			{$arrow_left}
-			<img class='displayed-picture zoomable' src='{$src}' data-picture-id='{$picture->id}' />
-			{$arrow_right}
-		</div>
-		<div class='info'>
+			<div class='row'>
+				<div class='image-container displayed-picture zoomable'>
+					{$arrow_left}
+					<img class='media' src='{$src}' data-picture-id='{$picture->id}' />
+					{$arrow_right}
+					</div>
+			</div>
+			<div class='info'>
+			</div>
 		</div>
 	</div>
 HTML;

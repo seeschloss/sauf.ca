@@ -185,6 +185,72 @@ a[data-tags~="nsfw"] img
 	opacity: 1 !important;
 	}
 
+#comments
+	{
+	transition: margin-left 0.5s;
+	position: absolute;
+	left: 0;
+	top: 0;
+	bottom: 0;
+	padding: 10px 5px;
+	width: 300px;
+	margin-left: -310px;
+	background: grey;
+	font-size: small;
+	color: white;
+	overflow: auto;
+	box-shadow: 0 0 8px black;
+	}
+
+#comments.wide
+	{
+	margin-left: 0;
+	}
+
+#comments ul
+	{
+	text-align: left;
+	padding: 0;
+	margin: 0;
+	list-style-type: none;
+	text-indent: 10px;
+	}
+
+#comments ul li
+	{
+	margin-top: 3px;
+	}
+
+#comments .clock
+	{
+	background: darkgrey;
+	border-radius: 4px;
+	padding: 0 2px;
+	cursor: pointer;
+	border: 1px solid darkgrey;
+	color: #EEE;
+	}
+
+#comments .message .clock
+	{
+	}
+
+#comments .clock.highlighted
+	{
+	border: 1px solid lightgrey;
+	color: white;
+	}
+
+#comments .login:after
+	{
+	content: ">";
+	}
+
+#viewer #comments.wide ~ .picture
+	{
+	margin-left: 300px;
+	}
+
 #viewer
 	{
 	padding: 0;
@@ -208,10 +274,26 @@ a[data-tags~="nsfw"] img
 
 #viewer .picture
 	{
+	transition: margin-left 0.5s;
 	position: absolute;
 	right: 0px;
 	left: 0px;
 	height: 100%;
+
+	display: flex;
+	align-items: center;
+	align-content: center;
+	justify-content: center;
+	flex-direction: column;
+	}
+
+#viewer .picture .row
+	{
+	display: flex;
+	align-items: stretch;
+	align-content: center;
+	justify-content: center;
+	max-width: 100%;
 	}
 
 #viewer .picture .displayed-picture
@@ -249,12 +331,12 @@ a[data-tags~="nsfw"] img
 
 #viewer .picture .displayed-picture:hover progress
 	{
-	height: 4px;
+	height: 7px;
 	}
 
 #viewer .picture .displayed-picture progress:hover
 	{
-	height: 7px;
+	height: 15px;
 	}
 
 #viewer .picture .displayed-picture progress::-webkit-progress-bar,
@@ -271,6 +353,7 @@ a[data-tags~="nsfw"] img
 
 #viewer #arrow-left, #viewer #arrow-right
 	{
+	align-self: center;
 	vertical-align: middle;
 	text-decoration: none;
 	font-weight: bold;
@@ -310,7 +393,7 @@ a[data-tags~="nsfw"] img
 	color: #EEE;
 }
 
-#viewer .picture .displayed-picture.zoomable
+#viewer .picture .displayed-picture.zoomable img
 	{
 	max-height: 100%;
 	max-width: 100%;
@@ -334,13 +417,8 @@ a[data-tags~="nsfw"] img
 
 #viewer .picture .image-label
 	{
-	margin: auto;
-	display: block;
-	width: 100%;
 	color: white;
 	font-size: 12px;
-	text-align: left;
-	margin-top: 0;
 	}
 
 #viewer .picture .displayed-picture.zoomable + .image-label, #viewer .picture .displayed-picture.zoomable + a + .image-label
