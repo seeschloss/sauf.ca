@@ -167,7 +167,7 @@ class OAuth
 			));
 			$answer = curl_exec($c);
 
-			if ($answer and $data = json_decode($answer))
+			if ($answer and $data = json_decode($answer) and $data->id > 0)
 				{
 				return $this->new_posts($data->id);
 				}
@@ -213,6 +213,6 @@ class OAuth
 				}
 			}
 
-		return $posts;
+		return array_reverse($posts);
 		}
 	}
