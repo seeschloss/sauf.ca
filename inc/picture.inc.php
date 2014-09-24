@@ -386,7 +386,7 @@ class Picture
 			unlink($tmp);
 			$tmp = $tmp.'.jpg';
 			`ffmpeg -i "{$this->path}" -frames 1 "{$tmp}" &>/dev/null`;
-			unlink($animated_path);
+			@unlink($animated_path);
 			//`ffmpeg -i "{$this->path}" -vf cropdetect=24:10:0,scale="'if(gt(a,1),-1,100)':'if(gt(a,1),100,-1)',crop=100:100" "{$animated_path}" &>/dev/null`;
 			`ffmpeg -i "{$this->path}" -vf scale="'if(gt(a,1),-1,100)':'if(gt(a,1),100,-1)',crop=100:100" -aspect 1 "{$animated_path}" &>/dev/null`;
 
@@ -394,7 +394,7 @@ class Picture
 			$im = imagecreatefromjpeg($tmp);
 
 			$tmp_img = imagecreatetruecolor(1, 1);
-			imagecopyresampled($tmp_img, $im, 0, 0, 0, 0, 1, 1, $x, $y);
+			imagecopyresampled($tmp_img, $im, 0, 0, 0, 0, 1, 1, 0, 0);
 			$rgb = imagecolorat($tmp_img, 0, 0);
 
 			if ($rgb == 0)
