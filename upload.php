@@ -10,6 +10,8 @@ if (!$argv)
 $tribune_name = $argv[1];
 $tribune_url = $argv[2];
 
+$images_per_user = array();
+
 $f = fopen('php://stdin', 'r');
 while ($line = fgets($f))
 	{
@@ -47,6 +49,17 @@ while ($line = fgets($f))
 			trigger_error('Previous url in this post was '.$picture->url);
 			}
 
+		if (!isset($images_per_user[$user_name]))
+			{
+			$images_per_user[$user_name] = 0;
+			}
+
+		if ($user_name == 'gle' and $images_per_user[$user_name] > 3)
+			{
+			trigger_error('gle< has already posted '.$images_per_user[$user_name].' images among new posts, skipping');
+			continue;
+			}
+
 		if ($image_data = process_url($url))
 			{
 			$tribune = new Tribune();
@@ -76,6 +89,8 @@ while ($line = fgets($f))
 				$picture->insert();
 				trigger_error('Picture saved');
 				echo "Image saved\n";
+
+				$images_per_user[$user_name] += 1;
 				}
 			}
 		}
