@@ -7,5 +7,12 @@ $GLOBALS['config'] = array(
 		'user' => 'root',
 		'password' => '',
 	),
+	'oauth' => array(
+		'dlfp' => array(
+			'app_id' => '',
+			'app_secret' => '',
+			'server' => 'https://alpha.linuxfr.org',
+		),
+	),
 	'contact' => '<a href="mailto:see@sauf.ca">contact</a>',
 );

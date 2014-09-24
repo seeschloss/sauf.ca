@@ -159,3 +159,4 @@ require_once dirname(__FILE__).'/db.inc.php';
 require_once dirname(__FILE__).'/site.inc.php';
 require_once dirname(__FILE__).'/picture.inc.php';
 require_once dirname(__FILE__).'/tribune.inc.php';
+require_once dirname(__FILE__).'/oauth.inc.php';

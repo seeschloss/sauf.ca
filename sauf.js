@@ -312,51 +312,44 @@ var toggleComments = function(image) {
 	var list = document.createElement('ul');
 
 	getComments(image.dataset.postId, function(posts) {
-		posts.forEach(function(post) {
-			var clock = post.time.substr(8, 2) + ':' + post.time.substr(10, 2) + ':' + post.time.substr(12, 2);
-
-			var li = document.createElement('li');
-			li.innerHTML += '<span class="clock">' + clock + '</span> <span class="login">' + post.login + '</span> <span class="message">' + detectClocks(detectTotoz(post.message)) + '</span>';
-			list.appendChild(li);
-
-		});
-
 		panel.appendChild(list);
+		appendComments(panel, list, posts);
 
-		var clocks = document.querySelectorAll('.clock');
-		for (var i = 0; i < clocks.length; i++) {
-			var clock = clocks.item(i);
-			clock.onmouseover = function(e) {
-				panel.className = 'wide fade';
-				highlightClocks(this.innerHTML);
-			};
-			clock.onmouseout = function(e) {
-				unhighlightClocks();
-				panel.className = 'wide';
-			};
-		}
+		var now = (new Date()).getTime() / 1000;
+		if (+image.dataset.date > now - 36000) {
+			checkCanPostComments(image.dataset.tribuneName, function(canPostComments) {
+				if (canPostComments) {
+					var form = document.createElement('form');
+					form.id = 'post-form';
+					var text = document.createElement('input');
+					text.placeholder = 'coin ! coin !';
+					text.id = 'message'; text.name = 'message';
+					form.appendChild(text);
+					panel.appendChild(form);
 
-		var totozes = document.querySelectorAll('.totoz');
-		for (var i = 0; i < totozes.length; i++) {
-			var totoz = totozes.item(i);
-			totoz.onmouseover = function(e) {
-				var name = this.innerHTML.substr(2, this.innerHTML.length - 2 - 1);
-				var url = 'https://totoz.eu/img/' + name;
+					form.onkeydown = function(e) {
+						e.stopPropagation();
+					};
 
-				var img = document.createElement('img');
-				img.src = url;
-				img.className = 'totoz-img';
-				img.style.left = (e.clientX + 2) + 'px';
-				img.style.top = (e.clientY + 2) + 'px';
+					form.onsubmit = function(e) {
+						e.preventDefault();
+						e.stopPropagation();
+						postComment(image.dataset.tribuneName, this.message.value, function(success, new_comments) {
+							this.message.value = "";
 
-				document.querySelector('body').appendChild(img);
-			};
-			totoz.onmouseout = function(e) {
-				var img = document.querySelector('img.totoz-img');
-				if (img) {
-					img.remove();
+							appendComments(panel, list, new_comments.filter(commentIsInDiscussion));
+						});
+					};
+				} else {
+					var form = document.createElement('form');
+					form.id = 'post-form';
+					form.action = 'oauth.php';
+					var button = document.createElement('button');
+					button.innerHTML = "S'authentifier sur DLFP";
+					form.appendChild(button);
+					panel.appendChild(form);
 				}
-			};
+			});
 		}
 	});
 
@@ -370,6 +363,118 @@ var toggleComments = function(image) {
 	setTimeout(function() {
 		panel.className = 'wide';
 	}, 100);
+};
+
+var commentIsInDiscussion = function(post) {
+	var clocks = document.querySelectorAll('.clock');
+	for (var i = 0; i < clocks.length; i++) {
+		var clock = clocks.item(i);
+
+		if (post.message.match(clock.innerHTML)) {
+			return true;
+		}
+	}
+
+	return false;
+};
+
+var appendComments = function(panel, list, posts) {
+	posts.forEach(function(post) {
+		var clock = post.time.substr(8, 2) + ':' + post.time.substr(10, 2) + ':' + post.time.substr(12, 2);
+
+		var li = document.createElement('li');
+		li.innerHTML += '<span class="clock">' + clock + '</span> <span class="login">' + post.login + '</span> <span class="message">' + detectClocks(detectTotoz(post.message)) + '</span>';
+		list.appendChild(li);
+	});
+
+	var clocks = document.querySelectorAll('.clock');
+	for (var i = 0; i < clocks.length; i++) {
+		var clock = clocks.item(i);
+		clock.onmouseover = function(e) {
+			panel.className = 'wide fade';
+			highlightClocks(this.innerHTML);
+		};
+		clock.onmouseout = function(e) {
+			unhighlightClocks();
+			panel.className = 'wide';
+		};
+		clock.onclick = function(e) {
+			var form = document.querySelector('#post-form');
+			if (form) {
+				form.message.value = this.innerText + ' ';
+				form.message.focus();
+			}
+		};
+	}
+
+	var totozes = document.querySelectorAll('.totoz');
+	for (var i = 0; i < totozes.length; i++) {
+		var totoz = totozes.item(i);
+		totoz.onmouseover = function(e) {
+			var name = this.innerHTML.substr(2, this.innerHTML.length - 2 - 1);
+			var url = 'https://totoz.eu/img/' + name;
+
+			var img = document.createElement('img');
+			img.src = url;
+			img.className = 'totoz-img';
+			img.style.left = (e.clientX + 2) + 'px';
+			img.style.top = (e.clientY + 2) + 'px';
+
+			document.querySelector('body').appendChild(img);
+		};
+		totoz.onmouseout = function(e) {
+			var img = document.querySelector('img.totoz-img');
+			if (img) {
+				img.remove();
+			}
+		};
+	}
+};
+
+var postComment = function(tribune, message, callback) {
+	if (tribune != 'dlfp') {
+		callback(false);
+		return;
+	}
+
+	var url = 'oauth/dlfp/post.json';
+	var req = new XMLHttpRequest();
+	var params = 'message=' + message;
+	req.open('POST', url, true);
+	req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+	req.onreadystatechange = function(e) {
+		if (req.readyState == 4) {
+			if (req.status == 200 || req.status == 0) {
+				var data = null;
+				if (data = JSON.parse(req.responseText)) {
+					callback(data.length > 0, data);
+				}
+			}
+		}
+	};
+	req.send(params);
+};
+
+var checkCanPostComments = function(tribune, callback) {
+	if (tribune != 'dlfp') {
+		callback(false);
+		return;
+	}
+
+	var url = 'oauth/dlfp/can_post.json';
+	var req = new XMLHttpRequest();
+	req.open('GET', url, true);
+	req.onreadystatechange = function(e) {
+		if (req.readyState == 4) {
+			if (req.status == 200 || req.status == 0) {
+				var data = null;
+				if ((data = JSON.parse(req.responseText)) !== undefined) {
+					callback(data);
+				}
+			}
+		}
+	};
+	req.send(null);
 };
 
 var detectClocks = function(message) {
@@ -698,7 +803,6 @@ var toggleZoom = function() {
 
 	if (zoomOverlay) {
 		var picture = document.querySelector('#viewer .picture .row .image-container');
-		console.log(picture);
 		picture.insertBefore(img, picture.firstChild);
 		zoomOverlay.remove();
 		document.querySelector('body').className = '';

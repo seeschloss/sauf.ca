@@ -232,6 +232,12 @@ a[data-tags~="nsfw"] img
 	margin-top: 3px;
 	}
 
+#comments input, #comments button
+	{
+	width: 95%;
+	margin-top: 1ex;
+	}
+
 #comments .clock
 	{
 	background: darkgrey;

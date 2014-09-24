@@ -9,7 +9,24 @@ require 'inc/common.inc.php';
 
 $site = new Site("Sauf.ça");
 
-if (strpos($_SERVER['REQUEST_URI'], '/latest.json') === 0) {
+if (strpos($_SERVER['REQUEST_URI'], '/oauth/dlfp/can_post.json') === 0) {
+	header('Content-Type: application/json');
+
+	$oauth = new OAuth();
+	print json_encode($oauth->can_post());
+	exit();
+} else if (strpos($_SERVER['REQUEST_URI'], '/oauth/dlfp/post.json') === 0) {
+	header('Content-Type: application/json');
+
+	$oauth = new OAuth();
+	print json_encode($oauth->tribune_post($_REQUEST['message']));
+	exit();
+} else if (strpos($_SERVER['REQUEST_URI'], '/oauth/dlfp/callback') === 0) {
+	$oauth = new OAuth();
+	$oauth->process();
+	header('Location: /');
+	exit();
+} else if (strpos($_SERVER['REQUEST_URI'], '/latest.json') === 0) {
 	header('Content-Type: application/json');
 
 	print $site->latest_json($_GET);
