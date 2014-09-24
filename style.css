@@ -91,6 +91,16 @@ body.zoomed #content #thumbnails-wrapper
 	content: "> ";
 	}
 
+#sitebar .links li.external:before
+	{
+	content: "@ ";
+	}
+
+#sitebar .links li.spacer
+	{
+	margin-bottom: 1ex;
+	}
+
 #sitebar .links a
 	{
 	font-style: normal;

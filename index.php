@@ -100,14 +100,20 @@ $content .= $site->viewer().'
 				<div class="header">'.$site->header().'</div>
 				<div class="links">
 					<ul>
-						<li>
-							<a href="/!">Gifs animés</a>
+						<li class="external">
+							<a href="http://tfeserver.fr/tribune_urls.html">URL postées</a>
+						</li>
+						<li class="external spacer">
+							<a href="http://bombefourchette.com/">Historique</a>
 						</li>
 						<li>
-							<a href="/!tut_tut">*tut tut*</a>
+							<a href="!">gifs animés</a>
 						</li>
 						<li>
-							<a href="/?houplaboom&lt;">houplababes</a>
+							<a href="!tut_tut">*tut tut*</a>
+						</li>
+						<li>
+							<a href="?houplaboom&lt;">houplababes</a>
 						</li>
 					</ul>
 				</div>
