@@ -28,6 +28,10 @@ function search_condition($search)
 		else
 			{
 			$term = $db->escape($term);
+			if ($term == 'tut_tut')
+				{
+				$term = 'tut_tu%t';
+				}
 			$condition = "p.user LIKE '$term%' OR p.title LIKE '%$term%' OR p.url LIKE '%$term%' OR p.tags LIKE '%$term%' OR p.raw_tags LIKE '%$term%'";
 			}
 
