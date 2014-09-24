@@ -12,6 +12,7 @@ $GLOBALS['config'] = array(
 			'app_id' => '',
 			'app_secret' => '',
 			'server' => 'https://alpha.linuxfr.org',
+			'secret' => 'random string',
 		),
 	),
 	'contact' => '<a href="mailto:see@sauf.ca">contact</a>',

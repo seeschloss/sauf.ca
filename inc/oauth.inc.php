@@ -54,11 +54,22 @@ class OAuth
 
 	function get_token()
 		{
-		if (isset($_COOKIE['dlfp_token']) and strpos($_COOKIE['dlfp_token'], ':') !== FALSE)
+		if (isset($_COOKIE['dlfp_token']) and $_COOKIE['dlfp_token'])
 			{
-			list($token, $refresh) = explode(':', $_COOKIE['dlfp_token']);
+			$key = hash('sha256', $GLOBALS['config']['oauth']['dlfp']['secret'], TRUE);
 
-			return $token;
+			$plaintext = base64_decode($_COOKIE['dlfp_token']);
+			$iv_size = mcrypt_get_iv_size(MCRYPT_RIJNDAEL_128, MCRYPT_MODE_CBC);
+
+			$iv = substr($plaintext, 0, $iv_size);
+			$crypted = substr($plaintext, $iv_size + 1);
+
+			$decrypted = trim(mcrypt_decrypt(MCRYPT_RIJNDAEL_128, $key, $crypted, MCRYPT_MODE_CBC, $iv));
+
+			if ($value = json_decode($decrypted) and isset($value->token))
+				{
+				return $value->token;
+				}
 			}
 
 		return '';
@@ -66,7 +77,15 @@ class OAuth
 
 	function store_token($token, $refresh, $expire)
 		{
-		setcookie('dlfp_token', $token . ':' . $refresh, $expire, NULL, NULL, FALSE, TRUE);
+		$value = json_encode(array(
+			'token' => $token,
+			'refresh' => $refresh,
+		));
+
+		$key = hash('sha256', $GLOBALS['config']['oauth']['dlfp']['secret'], TRUE);
+		$iv = mcrypt_create_iv(mcrypt_get_iv_size(MCRYPT_RIJNDAEL_128, MCRYPT_MODE_CBC));
+		$encrypted = mcrypt_encrypt(MCRYPT_RIJNDAEL_128, $key, $value, MCRYPT_MODE_CBC, $iv);
+		setcookie('dlfp_token', base64_encode($iv.':'.$encrypted), $expire, NULL, NULL, FALSE, TRUE);
 		}
 
 	function token_info()
