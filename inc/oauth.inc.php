@@ -43,7 +43,7 @@ class OAuth
 		$answer = curl_exec($c);
 		if ($answer and $data = json_decode($answer))
 			{
-			$this->store_token_in_cookie($data->access_token, $data->refresh_token, time() + $data->expires_in);
+			$this->store_token($data->access_token, $data->refresh_token, time() + $data->expires_in);
 			return true;
 			}
 		else
@@ -52,17 +52,27 @@ class OAuth
 			}
 		}
 
-	function store_token_in_cookie($token, $refresh, $expire)
+	function get_token()
+		{
+		if (isset($_COOKIE['dlfp_token']) and strpos($_COOKIE['dlfp_token'], ':') !== FALSE)
+			{
+			list($token, $refresh) = explode(':', $_COOKIE['dlfp_token']);
+
+			return $token;
+			}
+
+		return '';
+		}
+
+	function store_token($token, $refresh, $expire)
 		{
 		setcookie('dlfp_token', $token . ':' . $refresh, $expire);
 		}
 
 	function token_info()
 		{
-		if (isset($_COOKIE['dlfp_token']))
+		if ($token = $this->get_token())
 			{
-			list($token, $refresh) = explode(':', $_COOKIE['dlfp_token']);
-
 			$url = $GLOBALS['config']['oauth']['dlfp']['server'].'/api/oauth/token/info';
 
 			$c = curl_init();
@@ -94,10 +104,8 @@ class OAuth
 
 	function user_info()
 		{
-		if (isset($_COOKIE['dlfp_token']))
+		if ($token = $this->get_token())
 			{
-			list($token, $refresh) = explode(':', $_COOKIE['dlfp_token']);
-
 			$url = $GLOBALS['config']['oauth']['dlfp']['server'].'/api/v1/me';
 
 			$c = curl_init();
@@ -122,10 +130,8 @@ class OAuth
 
 	function tribune_post($message)
 		{
-		if (isset($_COOKIE['dlfp_token']))
+		if ($token = $this->get_token())
 			{
-			list($token, $refresh) = explode(':', $_COOKIE['dlfp_token']);
-
 			$url = $GLOBALS['config']['oauth']['dlfp']['server'].'/api/v1/board';
 
 			$c = curl_init();
