@@ -66,7 +66,7 @@ class OAuth
 
 	function store_token($token, $refresh, $expire)
 		{
-		setcookie('dlfp_token', $token . ':' . $refresh, $expire);
+		setcookie('dlfp_token', $token . ':' . $refresh, $expire, NULL, NULL, FALSE, TRUE);
 		}
 
 	function token_info()
