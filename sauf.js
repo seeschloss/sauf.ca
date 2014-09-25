@@ -335,8 +335,9 @@ var toggleComments = function(image) {
 						e.preventDefault();
 						e.stopPropagation();
 						postComment(image.dataset.tribuneName, this.message.value, function(success, new_comments) {
-							this.message.value = "";
-
+							if (success) {
+								this.message.value = "";
+							}
 							appendComments(panel, list, new_comments.filter(commentIsInDiscussion));
 						});
 					};
@@ -370,17 +371,21 @@ var toggleComments = function(image) {
 	}, 100);
 };
 
-var commentIsInDiscussion = function(post) {
+var stringIsInDiscussion = function(string) {
 	var clocks = document.querySelectorAll('.clock');
 	for (var i = 0; i < clocks.length; i++) {
 		var clock = clocks.item(i);
 
-		if (post.message.match(clock.innerHTML)) {
+		if (string.match(clock.innerHTML)) {
 			return true;
 		}
 	}
 
 	return false;
+};
+
+var commentIsInDiscussion = function(post) {
+	return stringIsInDiscussion(post.message);
 };
 
 var appendComments = function(panel, list, posts) {
@@ -438,7 +443,12 @@ var appendComments = function(panel, list, posts) {
 
 var postComment = function(tribune, message, callback) {
 	if (tribune != 'dlfp') {
-		callback(false);
+		callback(false, []);
+		return;
+	}
+
+	if (!stringIsInDiscussion(message)) {
+		callback(false, []);
 		return;
 	}
 
