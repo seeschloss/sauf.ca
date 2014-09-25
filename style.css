@@ -238,6 +238,12 @@ a[data-tags~="nsfw"] img
 	margin-top: 1ex;
 	}
 
+#comments .too-old
+	{
+	font-style: italic;
+	opacity: 0.7;
+	}
+
 #comments .clock
 	{
 	background: darkgrey;
@@ -256,6 +262,11 @@ a[data-tags~="nsfw"] img
 	{
 	border: 1px solid lightgrey;
 	color: white;
+	}
+
+#comments .clock.highlighted ~ .message
+	{
+	background-color: #666;
 	}
 
 #comments .login:after

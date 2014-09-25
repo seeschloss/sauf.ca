@@ -26,6 +26,15 @@ if (strpos($_SERVER['REQUEST_URI'], '/oauth/dlfp/can_post.json') === 0) {
 	$oauth->process();
 	header('Location: /');
 	exit();
+} else if (strpos($_SERVER['REQUEST_URI'], '/oauth/dlfp/conversation/') === 0) {
+	$id = substr($_SERVER['REQUEST_URI'], strlen('/oauth/dlfp/conversation/'));
+	$id = substr($id, 0, strpos($id, '.json'));
+	$id = (int)$id;
+
+	header('Content-Type: application/json');
+	$oauth = new OAuth();
+	print $oauth->conversation($id);
+	exit();
 } else if (strpos($_SERVER['REQUEST_URI'], '/latest.json') === 0) {
 	header('Content-Type: application/json');
 

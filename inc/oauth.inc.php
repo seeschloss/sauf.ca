@@ -215,4 +215,19 @@ class OAuth
 
 		return array_reverse($posts);
 		}
+
+	function conversation($from_id)
+		{
+		$posts = array();
+
+		$url = 'http://moules.ssz.fr/conversation/' . $from_id . '.json';
+
+		$c = curl_init();
+
+		curl_setopt($c, CURLOPT_URL, $url);
+		curl_setopt($c, CURLOPT_RETURNTRANSFER, true);
+		curl_setopt($c, CURLOPT_POST, false);
+		curl_setopt($c, CURLOPT_SSL_VERIFYPEER, false);
+		return curl_exec($c);
+		}
 	}

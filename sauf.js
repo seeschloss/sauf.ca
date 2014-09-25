@@ -350,6 +350,11 @@ var toggleComments = function(image) {
 					panel.appendChild(form);
 				}
 			});
+		} else {
+			var span = document.createElement('span');
+			span.className = 'too-old';
+			span.innerHTML = '(trop vieux pour répondre)';
+			panel.appendChild(span);
 		}
 	});
 
@@ -401,7 +406,7 @@ var appendComments = function(panel, list, posts) {
 		clock.onclick = function(e) {
 			var form = document.querySelector('#post-form');
 			if (form) {
-				form.message.value = this.innerText + ' ';
+				form.message.value = this.innerHTML + ' ';
 				form.message.focus();
 			}
 		};
@@ -512,7 +517,7 @@ var unhighlightClocks = function() {
 };
 
 var getComments = function(post_id, callback) {
-	var url = 'http://moules.ssz.fr/conversation/' + post_id + '.json';
+	var url = 'oauth/dlfp/conversation/' + post_id + '.json';
 	var req = new XMLHttpRequest();
 	req.open('GET', url, true);
 	req.onreadystatechange = function(e) {
