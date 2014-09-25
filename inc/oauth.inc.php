@@ -8,7 +8,7 @@ class OAuth
 			.'?client_id='.$GLOBALS['config']['oauth']['dlfp']['app_id']
 			.'&redirect_uri=http://sauf.ca/oauth/dlfp/callback'
 			.'&response_type=code'
-			.'&scope=board+account';
+			.'&scope=board';
 
 		header("Location: ".$url);
 		}
