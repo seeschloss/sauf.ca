@@ -27,6 +27,8 @@ while ($line = fgets($f))
 
 	if (!empty($matches[1])) foreach ($matches[1] as $url)
 		{
+		$source_url = $url;
+
 		trigger_error('URL is '.$url);
 		if (preg_match('/sauf.ca/', $url))
 			{
@@ -36,6 +38,30 @@ while ($line = fgets($f))
 		if (preg_match('/https?:\/\/gfycat.com\/[^.]*$/', $url))
 			{
 			$url = str_replace('gfycat.com', 'giant.gfycat.com', $url).".gif";
+			}
+
+		if (preg_match('/http:\/\/pr0gramm.com\/.*\/([0-9]*)$/', $url, $matches))
+			{
+			$url = 'http://pr0gramm.com/api/items/get?id=' . $matches[1];
+			$c = curl_init();
+			curl_setopt($c, CURLOPT_USERAGENT, "Mozilla/5.0 (X11; Linux x86_64; rv:29.0) Gecko/20100101 Firefox/29.0");
+			curl_setopt($c, CURLOPT_REFERER, "http://sauf.ca");
+			curl_setopt($c, CURLOPT_URL, $url);
+			curl_setopt($c, CURLOPT_RETURNTRANSFER, true);
+			curl_setopt($c, CURLOPT_SSL_VERIFYPEER, false);
+			curl_setopt($c, CURLOPT_CONNECTTIMEOUT, 2);
+			curl_setopt($c, CURLOPT_TIMEOUT, 15);
+			curl_setopt($c, CURLOPT_FOLLOWLOCATION, true);
+			curl_setopt($c, CURLOPT_MAXREDIRS, 5);
+
+			if ($a = curl_exec($c) and $data = json_decode($a) and isset($data->items) and count($data->items))
+				{
+				$url = 'http://img.pr0gramm.com/' . $data->items[0]->image;
+				if (isset($data->items[0]->source) and $data->items[0]->source)
+					{
+					$source_url = $data->items[0]->source;
+					}
+				}
 			}
 
 		$picture = new Picture();
@@ -71,9 +97,9 @@ while ($line = fgets($f))
 				}
 
 			$picture = new Picture();
-			$picture->name = $url;
+			$picture->name = $source_url;
 			$picture->title = $post[4];
-			$picture->url = $url;
+			$picture->url = $source_url;
 			$picture->date = $timestamp;
 			$picture->user = $user_name;
 			$picture->tribune_id = $tribune->id;
