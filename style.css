@@ -129,8 +129,25 @@ body.zoomed #content #thumbnails-wrapper
 	{
 	}
 
+#sitebar #upload-button
+	{
+	position: absolute;
+	top: -50px;
+	left: 0;
+	width: 100%;
+	font-style: normal;
+	font-weight: bold;
+	text-align: center;
+	color: white;
+	font-size: 40px;
+	display: inline-block;
+	overflow: hidden;
+	height: 25px;
+	}
+
 #sitebar .header
 	{
+	position: relative;
 	float: right;
 	margin-top: 60px;
 	margin-right: 100px;

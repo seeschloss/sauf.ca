@@ -182,6 +182,20 @@ HTML;
 HTML;
 				}
 			}
+		else if (strpos($uri, 'upload') === 0)
+			{
+			return <<<HTML
+	<div id='viewer'>
+		<div class='picture'>
+			<form id='upload-form' method='post' enctype='multipart/form-data'>
+				<input type='text' name='url' id='upload-url' placeholder='URL' required />
+				<input type='text' name='comment' id='upload-comment' placeholder='commentaire' />
+				<input type='submit' name='post' id='upload-post' value='⏎' />
+			</form>
+		</div>
+	</div>
+HTML;
+			}
 		else
 			{
 			return '';

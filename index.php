@@ -108,6 +108,7 @@ if (strpos($_SERVER['REQUEST_URI'], '/oauth/dlfp/can_post.json') === 0) {
 } else if (strpos($_SERVER['REQUEST_URI'], '/!') === 0) {
 } else if (strpos($_SERVER['REQUEST_URI'], '/*') === 0) {
 	$_SERVER['REQUEST_URI'] = '/';
+} else if (strpos($_SERVER['REQUEST_URI'], '/upload') === 0) {
 } else if (strlen($_SERVER['REQUEST_URI']) > 1) {
 	header('HTTP/1.0 404 Not Found');
 	header('Content-Type: text/plain');

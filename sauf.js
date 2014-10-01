@@ -894,7 +894,9 @@ var setCurrentImage = function(image) {
 var updateHistory = function() {
 	if (history && history.pushState) {
 		var title = "Sauf.ça";
-		var data = {};
+		var data = {
+			upload: false
+		};
 		var url = "/";
 
 		if (currentTerm || currentAnimated) {
@@ -906,6 +908,11 @@ var updateHistory = function() {
 		if (currentImage) {
 			data.image = currentImage.dataset.id;
 			url = "/+" + currentImage.dataset.id;
+		}
+
+		if (document.querySelector('#upload-form')) {
+			data.upload = true;
+			url = '/upload';
 		}
 
 		if (JSON.stringify(history.state) != JSON.stringify(data)) {
@@ -1223,6 +1230,126 @@ var formatDate = function(timestamp) {
 	return day + "/" + month + "/" + year + " " + hour + ":" + minute;
 };
 
+var setupUpload = function() {
+	var bloubs = document.querySelector('#sitebar .header');
+	
+	if (document.querySelector('#upload-form')) {
+		var viewer = document.querySelector('#viewer');
+		var form = document.querySelector('#upload-form');
+
+		viewer.onclick = function() {
+			closeViewer();
+			updateHistory();
+		};
+
+		form.onclick = function(e) {
+			e.stopPropagation();
+		};
+
+		form.onsubmit = function(e) {
+			e.preventDefault();
+			uploadFormSubmit(this.url.value, this.comment.value);
+		};
+	}
+
+	checkCanPostComments('dlfp', function(canPostComments) {
+		if (!canPostComments) {
+			return;
+		}
+
+		var upload = document.createElement('a');
+		upload.id = 'upload-button';
+		upload.href = 'upload';
+		upload.innerHTML = '⤒';
+		upload.title = 'Poster une nouvelle image sur DLFP';
+
+		bloubs.appendChild(upload);
+
+		upload.onclick = function(e) {
+			e.preventDefault();
+			showUpload();
+			updateHistory();
+		};
+	});
+};
+
+var showUpload = function() {
+	var viewer = document.createElement('div');
+	viewer.id = 'viewer';
+
+	var picture = document.createElement('div');
+	picture.className = 'picture';
+
+	var form = document.createElement('form');
+	form.id = 'upload-form';
+	form.action = 'upload';
+	form.method = 'post';
+	form.enctype = 'multipart/form-data';
+
+	var input_url = document.createElement('input');
+	input_url.type = 'text';
+	input_url.name = 'url';
+	input_url.id = 'upload-url';
+	input_url.required = true;
+	input_url.placeholder = 'URL';
+
+	var input_comment = document.createElement('input');
+	input_comment.type = 'text';
+	input_comment.name = 'comment';
+	input_comment.id = 'upload-comment';
+	input_comment.placeholder = 'commentaire';
+
+	var input_post = document.createElement('input');
+	input_post.type = 'submit';
+	input_post.name = 'post';
+	input_post.id = 'upload-post';
+	input_post.value = '⏎';
+
+	form.appendChild(input_url);
+	form.appendChild(input_comment);
+	form.appendChild(input_post);
+
+	form.onclick = function(e) {
+		e.stopPropagation();
+	};
+
+	form.onsubmit = function(e) {
+		e.preventDefault();
+		uploadFormSubmit(this.url.value, this.comment.value);
+	};
+
+	viewer.appendChild(picture);
+	picture.appendChild(form);
+
+	viewer.onclick = function() {
+		closeViewer();
+		updateHistory();
+	};
+
+	document.querySelector('body').appendChild(viewer);
+};
+
+var uploadFormSubmit = function(url, comment) {
+	var message = url + ' ' + comment;
+
+	var url = 'oauth/dlfp/post.json';
+	var req = new XMLHttpRequest();
+	var params = 'reload=true&message=' + encodeURI(message);
+	req.open('POST', url, true);
+	req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+	req.onreadystatechange = function(e) {
+		if (req.readyState == 4) {
+			if (req.status == 200 || req.status == 0) {
+				var data = null;
+				if (data = JSON.parse(req.responseText)) {
+					closeViewer();
+				}
+			}
+		}
+	};
+	req.send(params);
+};
+
 var images = document.querySelectorAll('a.thumbnail-link');
 
 for (var i = 0; i < images.length; i++) {
@@ -1255,6 +1382,8 @@ if (picture) {
 		attachProgressUpdateHandler(picture, progress);
 	}
 }
+
+setupUpload();
 
 setInterval(prependNewPictures, 5 * 60 * 1000);
 
@@ -1347,6 +1476,10 @@ window.onpopstate = function(e) {
 		performSearch(currentTerm, currentAnimated);
 	} else {
 		closeViewer();
+	}
+
+	if (history.state.upload == true) {
+		showUpload();
 	}
 };
 
