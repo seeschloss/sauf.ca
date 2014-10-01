@@ -191,6 +191,11 @@ a[data-tags~="nsfw"] img
 	transition: opacity 0.2s, width 0.2s;
 	}
 
+#content.quiet-fast img
+	{
+	transition: none;
+	}
+
 #content .thumbnail-link:hover *
 	{
 	opacity: 1 !important;

@@ -1181,8 +1181,15 @@ document.querySelector('body').onkeydown = function(e) {
 		case 81: // q
 			if (document.querySelector('#content').className.match(/quiet/)) {
 				document.querySelector('#content').className = document.querySelector('#content').className.replace(/quiet/, '');
+				if (window.localStorage) {
+					delete window.localStorage.quiet;
+				}
+
 			} else {
 				document.querySelector('#content').className += ' quiet';
+				if (window.localStorage) {
+					window.localStorage.quiet = true;
+				}
 			}
 			break;
 		case 82: // r
@@ -1342,4 +1349,9 @@ window.onpopstate = function(e) {
 		closeViewer();
 	}
 };
+
+if (window.localStorage && window.localStorage.quiet == "true") {
+	document.querySelector('#content').className += ' quiet quiet-fast';
+	document.querySelector('#content').className = document.querySelector('#content').className.replace(/quiet-fast/, '');
+}
 
