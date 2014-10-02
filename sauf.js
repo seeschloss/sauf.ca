@@ -1329,12 +1329,10 @@ var showUpload = function() {
 	document.querySelector('body').appendChild(viewer);
 };
 
-var uploadFormSubmit = function(url, comment) {
-	var message = url + ' ' + comment;
-
-	var url = 'oauth/dlfp/post.json';
+var uploadFormSubmit = function(image, comment) {
+	var url = 'oauth/dlfp/upload.json';
 	var req = new XMLHttpRequest();
-	var params = 'reload=true&message=' + encodeURI(message);
+	var params = 'file=' + encodeURI(image) + '&comment=' + encodeURI(comment);
 	req.open('POST', url, true);
 	req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
 	req.onreadystatechange = function(e) {
@@ -1342,7 +1340,9 @@ var uploadFormSubmit = function(url, comment) {
 			if (req.status == 200 || req.status == 0) {
 				var data = null;
 				if (data = JSON.parse(req.responseText)) {
-					closeViewer();
+					if (!data.error) {
+						closeViewer();
+					}
 				}
 			}
 		}

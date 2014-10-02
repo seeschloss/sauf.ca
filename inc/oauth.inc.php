@@ -176,6 +176,21 @@ class OAuth
 		return array();
 		}
 
+	function tribune_upload($url, $comment)
+		{
+		if (!is_image($url, $error))
+			{
+			return array('error' => 'Pas une image valide ('.$error.').');
+			}
+		else
+			{
+			$message = $url . ' ' . $comment;
+			$this->tribune_post($message);
+
+			return array('error' => false);
+			}
+		}
+
 	function new_posts($from_id)
 		{
 		$posts = array();

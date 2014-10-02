@@ -21,6 +21,12 @@ if (strpos($_SERVER['REQUEST_URI'], '/oauth/dlfp/can_post.json') === 0) {
 	$oauth = new OAuth();
 	print json_encode($oauth->tribune_post($_REQUEST['message']));
 	exit();
+} else if (strpos($_SERVER['REQUEST_URI'], '/oauth/dlfp/upload.json') === 0) {
+	header('Content-Type: application/json');
+
+	$oauth = new OAuth();
+	print json_encode($oauth->tribune_upload($_REQUEST['file'], $_REQUEST['comment']));
+	exit();
 } else if (strpos($_SERVER['REQUEST_URI'], '/oauth/dlfp/callback') === 0) {
 	$oauth = new OAuth();
 	$oauth->process();
