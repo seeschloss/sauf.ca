@@ -35,6 +35,16 @@ while ($line = fgets($f))
 			continue;
 			}
 
+		if (preg_match('/imgur.com\/[^.]*\.mp4$/', $url))
+			{
+			$url = str_replace('.mp4', '.webm', $url);
+			}
+
+		if (preg_match('/imgur.com\/[^.]*\.gifv$/', $url))
+			{
+			$url = str_replace('.gifv', '.webm', $url);
+			}
+
 		if (preg_match('/https?:\/\/gfycat.com\/[^.]*$/', $url))
 			{
 			$url = str_replace('gfycat.com', 'giant.gfycat.com', $url).".gif";
