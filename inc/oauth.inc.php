@@ -41,9 +41,39 @@ class OAuth
 				'redirect_uri' => 'http://sauf.ca/oauth/dlfp/callback',
 			));
 		$answer = curl_exec($c);
-		if ($answer and $data = json_decode($answer))
+		if ($answer and $data = json_decode($answer) and empty($data->error))
 			{
-			$this->store_token($data->access_token, $data->refresh_token, time() + $data->expires_in);
+			//$this->store_token($data->access_token, $data->refresh_token, time() + $data->expires_in);
+			$this->store_token($data->access_token, $data->refresh_token, time() + (3600 * 24 * 365));
+			return true;
+			}
+		else
+			{
+			return false;
+			}
+		}
+
+	function refresh($refresh_token)
+		{
+		$url = $GLOBALS['config']['oauth']['dlfp']['server'].'/api/oauth/token';
+
+		$c = curl_init();
+
+		curl_setopt($c, CURLOPT_URL, $url);
+		curl_setopt($c, CURLOPT_RETURNTRANSFER, true);
+		curl_setopt($c, CURLOPT_POST, true);
+		curl_setopt($c, CURLOPT_SSL_VERIFYPEER, false);
+		curl_setopt($c, CURLOPT_POSTFIELDS, array(
+				'client_id' => $GLOBALS['config']['oauth']['dlfp']['app_id'],
+				'client_secret' => $GLOBALS['config']['oauth']['dlfp']['app_secret'],
+				'refresh_token' => $refresh_token,
+				'grant_type' => 'refresh_token',
+			));
+		$answer = curl_exec($c);
+		if ($answer and $data = json_decode($answer) and empty($data->error))
+			{
+			//$this->store_token($data->access_token, $data->refresh_token, time() + $data->expires_in);
+			$this->store_token($data->access_token, $data->refresh_token, time() + (3600 * 24 * 365));
 			return true;
 			}
 		else
@@ -75,6 +105,29 @@ class OAuth
 		return '';
 		}
 
+	function get_refresh_token()
+		{
+		if (isset($_COOKIE['dlfp_token']) and $_COOKIE['dlfp_token'])
+			{
+			$key = hash('sha256', $GLOBALS['config']['oauth']['dlfp']['secret'], TRUE);
+
+			$plaintext = base64_decode($_COOKIE['dlfp_token']);
+			$iv_size = mcrypt_get_iv_size(MCRYPT_RIJNDAEL_128, MCRYPT_MODE_CBC);
+
+			$iv = substr($plaintext, 0, $iv_size);
+			$crypted = substr($plaintext, $iv_size + 1);
+
+			$decrypted = trim(mcrypt_decrypt(MCRYPT_RIJNDAEL_128, $key, $crypted, MCRYPT_MODE_CBC, $iv));
+
+			if ($value = json_decode($decrypted) and isset($value->refresh))
+				{
+				return $value->refresh;
+				}
+			}
+
+		return '';
+		}
+
 	function store_token($token, $refresh, $expire)
 		{
 		$value = json_encode(array(
@@ -88,8 +141,13 @@ class OAuth
 		setcookie('dlfp_token', base64_encode($iv.':'.$encrypted), $expire, NULL, NULL, FALSE, TRUE);
 		}
 
-	function token_info()
+	function token_info($try_refresh = TRUE)
 		{
+		if (!$try_refresh)
+			{
+			die("plop");
+			}
+
 		if ($token = $this->get_token())
 			{
 			$url = $GLOBALS['config']['oauth']['dlfp']['server'].'/api/oauth/token/info';
@@ -105,9 +163,17 @@ class OAuth
 			curl_setopt($c, CURLOPT_SSL_VERIFYPEER, false);
 			$answer = curl_exec($c);
 
-			if ($answer and $data = json_decode($answer))
+			if ($answer and $data = json_decode($answer) and empty($data->error))
 				{
 				return $data;
+				}
+			else if ($try_refresh and $refresh_token = $this->get_refresh_token() and $this->refresh($refresh_token))
+				{
+				return $this->token_info(FALSE);
+				}
+			else
+				{
+				return array();
 				}
 			}
 
