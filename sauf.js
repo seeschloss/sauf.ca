@@ -1230,6 +1230,15 @@ var formatDate = function(timestamp) {
 	return day + "/" + month + "/" + year + " " + hour + ":" + minute;
 };
 
+var handleUpload = function(form) {
+	var file = form.filedata.files[0];
+	if (file) {
+		postFile(file, form.comment.value);
+	} else {
+		postUrl(form.url.value, form.comment.value);
+	}
+};
+
 var setupUpload = function() {
 	var bloubs = document.querySelector('#sitebar .header');
 	
@@ -1248,7 +1257,7 @@ var setupUpload = function() {
 
 		form.onsubmit = function(e) {
 			e.preventDefault();
-			uploadFormSubmit(this.url.value, this.comment.value);
+			handleUpload(this);
 		};
 	}
 
@@ -1286,12 +1295,19 @@ var showUpload = function() {
 	form.method = 'post';
 	form.enctype = 'multipart/form-data';
 
+	var input_file = document.createElement('input');
+	input_file.type = 'file';
+	input_file.name = 'filedata';
+	input_file.id = 'upload-file';
+
 	var input_url = document.createElement('input');
 	input_url.type = 'text';
 	input_url.name = 'url';
 	input_url.id = 'upload-url';
-	input_url.required = true;
 	input_url.placeholder = 'URL';
+
+	var upload_span = document.createElement('span');
+	upload_span.id = 'upload-span';
 
 	var input_comment = document.createElement('input');
 	input_comment.type = 'text';
@@ -1305,7 +1321,14 @@ var showUpload = function() {
 	input_post.id = 'upload-post';
 	input_post.value = '⏎';
 
-	form.appendChild(input_url);
+	var upload_explanation = document.createElement('p');
+	upload_explanation.id = 'upload-explanation';
+	upload_explanation.innerHTML = "Vous pouvez poster un lien vers une image ou une vidéo, ou bien uploader un fichier qui sera hébergé sur <a href='http://pomf.se'>pomf.se</a>.";
+
+	upload_span.appendChild(input_file);
+	upload_span.appendChild(input_url);
+	form.appendChild(upload_explanation);
+	form.appendChild(upload_span);
 	form.appendChild(input_comment);
 	form.appendChild(input_post);
 
@@ -1315,7 +1338,7 @@ var showUpload = function() {
 
 	form.onsubmit = function(e) {
 		e.preventDefault();
-		uploadFormSubmit(this.url.value, this.comment.value);
+		handleUpload(this);
 	};
 
 	viewer.appendChild(picture);
@@ -1329,7 +1352,31 @@ var showUpload = function() {
 	document.querySelector('body').appendChild(viewer);
 };
 
-var uploadFormSubmit = function(image, comment) {
+var postFile = function(file, comment) {
+	var url = 'oauth/dlfp/upload.json';
+	var req = new XMLHttpRequest();
+
+	var fd = new FormData();
+	fd.append('comment', comment);
+	fd.append('filedata', file);
+
+	req.open('POST', url, true);
+	req.onreadystatechange = function(e) {
+		if (req.readyState == 4) {
+			if (req.status == 200 || req.status == 0) {
+				var data = null;
+				if (data = JSON.parse(req.responseText)) {
+					if (!data.error) {
+						closeViewer();
+					}
+				}
+			}
+		}
+	};
+	req.send(fd);
+};
+
+var postUrl = function(image, comment) {
 	var url = 'oauth/dlfp/upload.json';
 	var req = new XMLHttpRequest();
 	var params = 'file=' + encodeURI(image) + '&comment=' + encodeURI(comment);

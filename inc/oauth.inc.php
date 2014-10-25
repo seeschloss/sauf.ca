@@ -242,7 +242,46 @@ class OAuth
 		return array();
 		}
 
-	function tribune_upload($url, $comment)
+	function tribune_upload_file($file, $comment)
+		{
+		if (!is_acceptable($file['type']))
+			{
+			return array('error' => 'Pas une image valide ('.$file['type'].').');
+			}
+		else
+			{
+			$url = 'http://pomf.se/upload.php';
+
+			$curl_file = new CURLFile($file['tmp_name']);
+			$curl_file->setPostFilename($file['name']);
+
+			$c = curl_init();
+
+			curl_setopt($c, CURLOPT_URL, $url);
+			curl_setopt($c, CURLOPT_RETURNTRANSFER, true);
+			curl_setopt($c, CURLOPT_POST, true);
+			curl_setopt($c, CURLOPT_SSL_VERIFYPEER, false);
+			curl_setopt($c, CURLOPT_POSTFIELDS, array(
+				'files[]' => $curl_file,
+			));
+			$answer = curl_exec($c);
+			if ($data = json_decode($answer))
+				{
+				if ($data->success)
+					{
+					$url = 'http://a.pomf.se/' . $data->files[0]->url;
+
+					return $this->tribune_post_url($url, $comment);
+					}
+
+				return array('error' => 'Upload impossible ('.$data->error.')');
+				}
+
+			return array('error' => 'Upload impossible ('.$answer.')');
+			}
+		}
+
+	function tribune_post_url($url, $comment)
 		{
 		if (!is_image($url, $error))
 			{

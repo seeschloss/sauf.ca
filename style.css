@@ -660,3 +660,14 @@ a.thumbnail-link[data-animated^="http"]:hover:before
 	float: right;
 	}
 
+#upload-span
+	{
+	display: inline-block;
+	vertical-align: middle;
+	}
+
+#upload-span input
+	{
+	display: block;
+	}
+

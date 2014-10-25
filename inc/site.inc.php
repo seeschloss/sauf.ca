@@ -188,7 +188,11 @@ HTML;
 	<div id='viewer'>
 		<div class='picture'>
 			<form id='upload-form' method='post' enctype='multipart/form-data'>
-				<input type='text' name='url' id='upload-url' placeholder='URL' required />
+				<p id='upload-explanation'>Vous pouvez poster un lien vers une image ou une vidéo, ou bien uploader un fichier qui sera hébergé sur <a href='http://pomf.se'>pomf.se</a>.</p>
+				<span id='upload-span'>
+					<input type='file' name='filedata' id='upload-file' />
+					<input type='text' name='url' id='upload-url' placeholder='URL' />
+				</span>
 				<input type='text' name='comment' id='upload-comment' placeholder='commentaire' />
 				<input type='submit' name='post' id='upload-post' value='⏎' />
 			</form>

@@ -113,6 +113,18 @@ function is_image($url, &$error)
 		return false;
 		}
 
+	$content_type = curl_getinfo($c, CURLINFO_CONTENT_TYPE);
+	if (!is_acceptable($content_type))
+		{
+		$error = "Content type not acceptable (".$content_type.")";
+		return false;
+		}
+
+	return true;
+	}
+
+function is_acceptable($content_type)
+	{
 	$content_types = array(
 		'image/gif' => 'gif',
 		'image/jpeg' => 'jpg',
@@ -120,14 +132,8 @@ function is_image($url, &$error)
 		'image/png' => 'png',
 		'video/webm' => 'webm',
 	);
-	$content_type = curl_getinfo($c, CURLINFO_CONTENT_TYPE);
-	if (!isset($content_types[$content_type]))
-		{
-		$error = "Content type not acceptable (".$content_type.")";
-		return false;
-		}
 
-	return true;
+	return isset($content_types[$content_type]);
 	}
 
 function process_url($url)
@@ -187,15 +193,8 @@ function process_url($url)
 		return false;
 		}
 
-	$content_types = array(
-		'image/gif' => 'gif',
-		'image/jpeg' => 'jpg',
-		'image/jpg' => 'jpg',
-		'image/png' => 'png',
-		'video/webm' => 'webm',
-	);
 	$content_type = curl_getinfo($c, CURLINFO_CONTENT_TYPE);
-	if (!isset($content_types[$content_type]))
+	if (!is_acceptable($content_type))
 		{
 		echo "Content type not acceptable (".$content_type.")\n";
 		return false;
