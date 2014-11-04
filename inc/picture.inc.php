@@ -192,7 +192,7 @@ class Picture
 			}
 		$this->type = $mime;
 
-		$this->md5 = md5($data);
+		$this->md5 = substr(hash('sha256', $data), 0, 32);
 
 		trigger_error('MD5 is '.$this->md5);
 
