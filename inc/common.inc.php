@@ -125,6 +125,7 @@ function is_image($url, &$error)
 
 function is_acceptable($content_type)
 	{
+	list($type) = explode(';', $content_type);
 	$content_types = array(
 		'image/gif' => 'gif',
 		'image/jpeg' => 'jpg',
@@ -133,7 +134,7 @@ function is_acceptable($content_type)
 		'video/webm' => 'webm',
 	);
 
-	return isset($content_types[$content_type]);
+	return isset($content_types[$type]);
 	}
 
 function process_url($url)
