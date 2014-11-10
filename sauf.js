@@ -743,7 +743,7 @@ var showImageStatus = function(image) {
 
 	var google = document.createElement('a');
 	google.className = 'google';
-	google.href = 'https://www.google.com/searchbyimage?hl=en&safe=off&site=search&image_url=' + image.dataset.url;
+	google.href = 'https://www.google.com/searchbyimage?hl=en&safe=off&site=search&image_url=' + image.dataset.src;
 	google.innerHTML = 'Google';
 	status.appendChild(google);
 
