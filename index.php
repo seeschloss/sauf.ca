@@ -186,6 +186,7 @@ $content .= $site->viewer().'
 			</div>
 			<div id="information">
 				<span id="status">
+					<a id="contact-link" href="http://github.com/seeschloss/sauf.ca">github</a>
 					<a id="contact-link" href="mailto:see@sauf.ca">contact</a>
 				</span>
 			</div>

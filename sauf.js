@@ -674,7 +674,7 @@ var closeViewer = function() {
 
 var resetStatus = function() {
 	if (!document.querySelector('#viewer')) {
-		document.querySelector('#status').innerHTML = '<a id="contact-link" href="mailto:see@sauf.ca">contact</a>';
+		document.querySelector('#status').innerHTML = '<a id="contact-link" href="http://github.com/seeschloss/sauf.ca">github</a> <a id="contact-link" href="mailto:see@sauf.ca">contact</a>';
 	}
 }
 
