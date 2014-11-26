@@ -326,11 +326,12 @@ class Picture
 		return $tags;
 		}
 
-	function user() {
+	function user()
+		{
 		$user = new User();
 		$user->load($this->user_id);
 		return $user;
-	}
+		}
 
 	function thumbnail()
 		{
