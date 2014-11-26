@@ -973,8 +973,8 @@ var resetToLatest = function() {
 
 var appendOldPictures = function() {
 	var oldest = 0;
-	if (document.querySelector('#thumbnails a:last-child')) {
-		oldest = +document.querySelector('#thumbnails a:last-child').dataset.id;
+	if (document.querySelector('#thumbnails a:last-of-type')) {
+		oldest = +document.querySelector('#thumbnails a:last-of-type').dataset.id;
 	}
 
 	var url = 'http://sauf.ca/history.json?count=250&until=' + oldest;

@@ -251,12 +251,37 @@ HTML;
 
 		$contents = "";
 
+		$n = 0;
+		$prefetch_quantity = 20;
+		$prefetch_first = "";
+		$prefetch_later = "";
+		$prefetch_last = "";
 		foreach ($pictures as $picture)
 			{
 			$contents .= $picture->thumbnail();
+			if ($n < $prefetch_quantity)
+				{
+				$n++;
+
+				if ($picture->type == 'video/webm')
+					{
+					$prefetch_later .= '<link rel="prefetch" href="'.$picture->animated_src().'" />';
+					}
+				else if ($picture->type == 'image/gif')
+					{
+					$src = url(PICTURES_PREFIX.'/'.$picture->src, true);
+					$prefetch_first .= '<link rel="prefetch" href="'.$picture->animated_src().'" />';
+					$prefetch_last  .= '<link rel="prefetch" href="'.$src.'" />';
+					}
+				else
+					{
+					$src = url(PICTURES_PREFIX.'/'.$picture->src, true);
+					$prefetch_later .= '<link rel="prefetch" href="'.$src.'" />';
+					}
+				}
 			}
 
-		return $contents;
+		return $contents.$prefetch_first.$prefetch_later.$prefetch_last;
 		}
 
 	function header()
@@ -296,6 +321,10 @@ HTML;
 			<title>'.htmlspecialchars($title).'</title>
 			<link rel="stylesheet" type="text/css" href="style.3.css" />
 			<link rel="icon" type="image/png" href="sauf.png" />
+			<link rel="dns-prefetch" href="img.sauf.ca" />
+			<link rel="dns-prefetch" href="a.img.sauf.ca" />
+			<link rel="dns-prefetch" href="b.img.sauf.ca" />
+			<link rel="dns-prefetch" href="c.img.sauf.ca" />
 		</head>
 		<body>';
 		}
