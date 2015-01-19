@@ -24,6 +24,10 @@ function search_condition($search)
 		else if ($term[strlen($term) - 1] == "<")
 			{
 			$condition = "p.user = '".$db->escape(substr($term, 0, -1))."'";
+			if ($term == 'houplaboom<')
+				{
+				$condition .= " AND p.tags LIKE '%nsfw%'";
+				}
 			}
 		else
 			{
@@ -48,13 +52,13 @@ function url($path, $random = false)
 		return $path;
 		}
 
-	if ($random)
+	if (!$_SERVER['HTTPS'] && $random)
 		{
 		$SERVERS = array
 			(
-			'a.img.sauf.ca',
-			'b.img.sauf.ca',
-			'c.img.sauf.ca',
+			'http://a.img.sauf.ca',
+			'http://b.img.sauf.ca',
+			'http://c.img.sauf.ca',
 			);
 
 		$index = abs(crc32($path)) % count($SERVERS);
@@ -62,10 +66,10 @@ function url($path, $random = false)
 		}
 	else
 		{
-		$server = 'sauf.ca';
+		$server = 'https://img.sauf.ca';
 		}
 
-	return 'http://'.$server.'/'.$path;
+	return $server.'/'.$path;
 	}
 
 function is_image($url, &$error)

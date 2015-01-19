@@ -643,7 +643,7 @@ var stopAnimation = function(image) {
 
 var markNsfw = function(image) {
 	var req = new XMLHttpRequest();
-	req.open('GET', 'http://sauf.ca/nsfw.json?picture=' + image.dataset.id, true);
+	req.open('GET', 'nsfw.json?picture=' + image.dataset.id, true);
 	req.onreadystatechange = function(e) {
 		if (req.readyState == 4) {
 			if (req.status == 200 || req.status == 0) {
@@ -928,7 +928,7 @@ var performSearch = function(term, animated) {
 		return resetToLatest();
 	}
 
-	var uri = 'http://sauf.ca/latest.json?count=250&search=' + encodeURIComponent(term);
+	var uri = 'latest.json?count=250&search=' + encodeURIComponent(term);
 	if (animated) {
 		uri += '&animated=1';
 	}
@@ -953,7 +953,7 @@ var performSearch = function(term, animated) {
 
 var resetToLatest = function() {
 	var req = new XMLHttpRequest();
-	req.open('GET', 'http://sauf.ca/latest.json?since=0', true);
+	req.open('GET', 'latest.json?since=0', true);
 	req.onreadystatechange = function(e) {
 		if (req.readyState == 4) {
 			if (req.status == 200 || req.status == 0) {
@@ -977,7 +977,7 @@ var appendOldPictures = function() {
 		oldest = +document.querySelector('#thumbnails a:last-of-type').dataset.id;
 	}
 
-	var url = 'http://sauf.ca/history.json?count=250&until=' + oldest;
+	var url = 'history.json?count=250&until=' + oldest;
 	if (currentTerm != "") {
 		url += "&search=" + encodeURIComponent(currentTerm);
 	}
@@ -1008,7 +1008,7 @@ var prependNewPictures = function() {
 		newest = +document.querySelector('#thumbnails a:first-child').dataset.id;
 	}
 
-	var url = 'http://sauf.ca/latest.json?since=' + newest;
+	var url = 'latest.json?since=' + newest;
 	if (currentTerm != "") {
 		url += "&search=" + encodeURIComponent(currentTerm);
 	}
@@ -1041,7 +1041,7 @@ var appendNewPicture = function(data) {
 
 	var link = document.createElement('a');
 	link.id = 'thumbnail-' + data.id;
-	link.href = 'http://sauf.ca/+' + data.id;
+	link.href = '+' + data.id;
 	link.className = 'thumbnail-link';
 
 	// what a mess
@@ -1080,7 +1080,7 @@ var prependNewPicture = function(data) {
 
 	var link = document.createElement('a');
 	link.id = 'thumbnail-' + data.id;
-	link.href = 'http://sauf.ca/+' + data.id;
+	link.href = '+' + data.id;
 	link.className = 'thumbnail-link';
 
 	// what a mess
