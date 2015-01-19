@@ -1,0 +1,3 @@
+[submodule "lib/opengraph"]
+	path = lib/opengraph
+	url = git@github.com:scottmac/opengraph.git
