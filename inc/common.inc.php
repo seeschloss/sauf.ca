@@ -141,7 +141,7 @@ function is_acceptable($content_type)
 	return isset($content_types[$type]);
 	}
 
-function process_url($url)
+function process_url($url, &$content_type)
 	{
 	$url = html_entity_decode($url);
 
@@ -199,27 +199,19 @@ function process_url($url)
 		}
 
 	$content_type = curl_getinfo($c, CURLINFO_CONTENT_TYPE);
-	if (!is_acceptable($content_type))
+	curl_setopt($c, CURLOPT_HEADER, false);
+	curl_setopt($c, CURLOPT_NOBODY, false);
+	curl_setopt($c, CURLOPT_HTTPGET, true);
+
+	if (!$image_data = curl_exec($c))
 		{
-		echo "Content type not acceptable (".$content_type.")\n";
+		echo curl_error($c)."\n";
 		return false;
 		}
 	else
 		{
-		curl_setopt($c, CURLOPT_HEADER, false);
-		curl_setopt($c, CURLOPT_NOBODY, false);
-		curl_setopt($c, CURLOPT_HTTPGET, true);
-
-		if (!$image_data = curl_exec($c))
-			{
-			echo curl_error($c)."\n";
-			return false;
-			}
-		else
-			{
-			echo "Image downloaded (".strlen($image_data)." bytes)\n";
-			return $image_data;
-			}
+		echo "Link downloaded (".strlen($image_data)." bytes)\n";
+		return $image_data;
 		}
 
 	return false;
@@ -229,5 +221,6 @@ function process_url($url)
 require_once dirname(__FILE__).'/db.inc.php';
 require_once dirname(__FILE__).'/site.inc.php';
 require_once dirname(__FILE__).'/picture.inc.php';
+require_once dirname(__FILE__).'/link.inc.php';
 require_once dirname(__FILE__).'/tribune.inc.php';
 require_once dirname(__FILE__).'/oauth.inc.php';

@@ -26,6 +26,19 @@ class Picture
 		{
 		}
 
+	static function acceptable($data, $content_type)
+		{
+		$content_types = array(
+			'image/gif' => 'gif',
+			'image/jpeg' => 'jpg',
+			'image/jpg' => 'jpg',
+			'image/png' => 'png',
+			'video/webm' => 'webm',
+		);
+
+		return isset($content_types[$content_type]);
+		}
+
 	function load_by_post_id($post_id)
 		{
 		$data = array();

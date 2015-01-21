@@ -16,7 +16,13 @@ class DB
 
 	function query($query)
 		{
-		return $this->resource->query($query);
+		$result = $this->resource->query($query);
+		if ($error = mysqli_error($this->resource))
+			{
+			trigger_error($error);
+			trigger_error("Query was: ".$query);
+			}
+		return $result;
 		}
 
 	function value($query)
