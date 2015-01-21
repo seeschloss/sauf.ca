@@ -52,7 +52,7 @@ function url($path, $random = false)
 		return $path;
 		}
 
-	if (!$_SERVER['HTTPS'] && $random)
+	if ((!isset($_SERVER['HTTP']) || !$_SERVER['HTTPS']) && $random)
 		{
 		$SERVERS = array
 			(
