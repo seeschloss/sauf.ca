@@ -3,13 +3,13 @@
 require_once dirname(__FILE__).'/../cfg/config.inc.php';
 
 define("UPLOAD_DIR", $GLOBALS['config']['upload']['directory']);
-define("UPLOAD_MAX_SIZE", $GLOBALS['config']['upload']['directory']);
+define("UPLOAD_MAX_SIZE", $GLOBALS['config']['upload']['max_size']);
 define("NB_INITIAL_THUMBNAILS", 250);
 define("THUMBNAIL_SIZE", 100);
 
 define("PICTURES_PREFIX", 'pictures');
 
-function search_condition($search)
+function search_condition($search, $table = 'p')
 	{
 	$db = new DB();
 	$conditions = array();
@@ -19,14 +19,14 @@ function search_condition($search)
 		$tribune = new Tribune();
 		if ($term[0] == "@" && $tribune->load_by_name(substr($term, 1)))
 			{
-			$condition = "p.tribune_id = ".(int)$tribune->id;
+			$condition = "$table.tribune_id = ".(int)$tribune->id;
 			}
 		else if ($term[strlen($term) - 1] == "<")
 			{
-			$condition = "p.user = '".$db->escape(substr($term, 0, -1))."'";
+			$condition = "$table.user = '".$db->escape(substr($term, 0, -1))."'";
 			if ($term == 'houplaboom<')
 				{
-				$condition .= " AND p.tags LIKE '%nsfw%'";
+				$condition .= " AND $table.tags LIKE '%nsfw%'";
 				}
 			}
 		else
@@ -36,7 +36,7 @@ function search_condition($search)
 				{
 				$term = 'tut_tu%t';
 				}
-			$condition = "p.user LIKE '$term%' OR p.title LIKE '%$term%' OR p.url LIKE '%$term%' OR p.tags LIKE '%$term%' OR p.raw_tags LIKE '%$term%'";
+			$condition = "$table.user LIKE '$term%' OR $table.title LIKE '%$term%' OR $table.url LIKE '%$term%' OR $table.tags LIKE '%$term%' OR $table.raw_tags LIKE '%$term%'";
 			}
 
 		$conditions[] = "(".$condition.")";
@@ -47,7 +47,7 @@ function search_condition($search)
 
 function url($path, $random = false)
 	{
-	if (strpos($_SERVER['HTTP_HOST'], 'sauf.ca') === FALSE)
+	if (isset($_SERVER['HTTP_HOST']) && strpos($_SERVER['HTTP_HOST'], 'sauf.ca') === FALSE)
 		{
 		return $path;
 		}
@@ -182,19 +182,19 @@ function process_url($url, &$content_type)
 
 	if (!$a = curl_exec($c))
 		{
-		echo curl_error($c)."\n";
+		Logger::error(curl_error($c));
 		return false;
 		}
 
 	if (($code = curl_getinfo($c, CURLINFO_HTTP_CODE)) >= 400)
 		{
-		echo 'HTTP error '.$code." for $url\n";
+		Logger::error('HTTP error '.$code." for $url");
 		return false;
 		}
 
 	if (($size = curl_getinfo($c, CURLINFO_CONTENT_LENGTH_DOWNLOAD)) > UPLOAD_MAX_SIZE)
 		{
-		echo 'File bigger than '.round(UPLOAD_MAX_SIZE/1024/1024)."MB (".round(CURLINFO_CONTENT_LENGTH_DOWNLOAD/1024/1024)."MB)\n";
+		Logger::error('File bigger than '.round(UPLOAD_MAX_SIZE/1024/1024)."MB (".round(CURLINFO_CONTENT_LENGTH_DOWNLOAD/1024/1024)."MB)");
 		return false;
 		}
 
@@ -205,12 +205,12 @@ function process_url($url, &$content_type)
 
 	if (!$image_data = curl_exec($c))
 		{
-		echo curl_error($c)."\n";
+		Logger::error(curl_error($c));
 		return false;
 		}
 	else
 		{
-		echo "Link downloaded (".strlen($image_data)." bytes)\n";
+		Logger::error("Link downloaded (".strlen($image_data)." bytes)");
 		return $image_data;
 		}
 
@@ -218,6 +218,7 @@ function process_url($url, &$content_type)
 	}
 
 
+require_once dirname(__FILE__).'/logger.inc.php';
 require_once dirname(__FILE__).'/db.inc.php';
 require_once dirname(__FILE__).'/site.inc.php';
 require_once dirname(__FILE__).'/picture.inc.php';

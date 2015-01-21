@@ -495,7 +495,7 @@ a[data-tags~="nsfw"] img
 	position: absolute;
 	bottom: 0;
 	width: 100%;
-	height: 2.5ex;
+	height: 5ex;
 	background-color: black;
 	}
 
@@ -515,7 +515,7 @@ a[data-tags~="nsfw"] img
 
 #information #status .date
 	{
-	margin-left: 150px;
+	margin-left: 1em;
 	}
 
 #information #status #show-comments
@@ -627,6 +627,7 @@ a.thumbnail-link > img, a.thumbnail-link.link > span.link-text, a.thumbnail-link
 
 a.thumbnail-link.link > span.link-text
 	{
+	text-align: center;
 	position: relative;
 	background: transparent;
 	line-height: 8px;

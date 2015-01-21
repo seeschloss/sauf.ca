@@ -146,10 +146,11 @@ class Picture
 			'tribune-url' => $this->tribune_url,
 			'post-id' => $this->post_id,
 			'src' => url(PICTURES_PREFIX.'/'.$this->src, true),
-			'thumbnail-src' => url(PICTURES_PREFIX.'/'.$this->thumbnail_src, true),
+			'thumbnail-src' => $this->thumbnail_src ? url(PICTURES_PREFIX.'/'.$this->thumbnail_src, true) : "",
 			'animated' => '',
 			'md5' => $this->md5,
 			'bloubs' => $this->doublons,
+			'type' => $this->type,
 			);
 
 		if ($this->animated)
@@ -180,11 +181,10 @@ class Picture
 
 	function write($data)
 		{
-		trigger_error('Writing picture, data '.strlen($data).' bytes long');
+		Logger::notice('Writing picture, data '.strlen($data).' bytes long');
 		$finfo = new Finfo(FILEINFO_MIME);
-		trigger_error('Finfo created');
 		@list($mime, $charset) = explode(';', $finfo->buffer($data));
-		trigger_error('Mimetype is '.$mime);
+		Logger::notice('Mimetype is '.$mime);
 		switch ($mime)
 			{
 			case 'video/webm':
@@ -200,14 +200,14 @@ class Picture
 				$extension = 'png';
 				break;
 			default:
-				trigger_error("Mime-type not acceptable: ".$mime);
+				Logger::warning("Mime-type not acceptable: ".$mime);
 				return false;
 			}
 		$this->type = $mime;
 
 		$this->md5 = substr(hash('sha256', $data), 0, 32);
 
-		trigger_error('MD5 is '.$this->md5);
+		Logger::notice('MD5 is '.$this->md5);
 
 		if (empty($this->path))
 			{
@@ -359,10 +359,10 @@ class Picture
 			$extra .= ' data-bloubs="'.(int)$this->doublons.'"';
 			}
 
-		$src = url(PICTURES_PREFIX.'/'.$this->thumbnail_src, true);
+		$src = $this->thumbnail_src ? url(PICTURES_PREFIX.'/'.$this->thumbnail_src, true) : "http://img.sauf.ca/blank.png";
 		$href = url('+'.$this->id);
 		return
-			'<a id="thumbnail-'.$this->id.'" href="'.$href.'" class="thumbnail-link" '.
+			'<a id="thumbnail-'.$this->id.'" href="'.$href.'" class="thumbnail-link picture" '.
 					' data-id="'.$this->id.'"'.
 					' data-title="'.htmlspecialchars($this->title).'"'.
 					' data-url="'.htmlspecialchars($this->url).'"'.
@@ -373,6 +373,7 @@ class Picture
 					' data-tribune-url="'.htmlspecialchars($this->tribune_url).'"'.
 					' data-post-id="'.htmlspecialchars($this->post_id).'"'.
 					' data-md5="'.htmlspecialchars($this->md5).'"'.
+					' data-type="'.htmlspecialchars($this->type).'"'.
 					' data-src="'.url(PICTURES_PREFIX.'/'.$this->src, true).'"'.
 					$extra.
 					'>'.

@@ -7,8 +7,6 @@ if (!$argv)
 	exit();
 	}
 
-$GLOBALS['config']['db']['database'] = 'sauf_test';
-
 $tribune_name = $argv[1];
 $tribune_url = $argv[2];
 
@@ -31,7 +29,7 @@ while ($line = fgets($f))
 		{
 		$source_url = $url;
 
-		trigger_error('URL is '.$url);
+		Logger::notice('URL is '.$url);
 		if (preg_match('/sauf.ca/', $url))
 			{
 			continue;
@@ -75,16 +73,17 @@ while ($line = fgets($f))
 					}
 				}
 			}
+		Logger::notice('URL to download is '.$url);
 
 		$picture = new Picture();
 		if ($picture->load_by_post_id($post_id) and $picture->url == $url)
 			{
-			trigger_error('Picture already uploaded (id '.$picture->id.')');
+			Logger::warning('Picture already uploaded (id '.$picture->id.')');
 			continue;
 			}
 		else if ($picture->url)
 			{
-			trigger_error('Previous url in this post was '.$picture->url);
+			Logger::notice('Previous url in this post was '.$picture->url);
 			}
 
 		if (!isset($images_per_user[$user_name]))
@@ -94,7 +93,7 @@ while ($line = fgets($f))
 
 		if ($user_name == 'gle' and $images_per_user[$user_name] > 3)
 			{
-			trigger_error('gle< has already posted '.$images_per_user[$user_name].' images among new posts, skipping');
+			Logger::warning('gle< has already posted '.$images_per_user[$user_name].' images among new posts, skipping');
 			continue;
 			}
 
@@ -110,8 +109,6 @@ while ($line = fgets($f))
 
 			if (Picture::acceptable($data, $content_type))
 				{
-				continue;
-
 				$picture = new Picture();
 				$picture->name = $source_url;
 				$picture->title = $post[4];
@@ -121,16 +118,16 @@ while ($line = fgets($f))
 				$picture->tribune_id = $tribune->id;
 				$picture->post_id = $post_id;
 
-				trigger_error('Post ID is '.$post_id);
-				trigger_error('Tribune ID is '.$tribune->id);
+				Logger::notice('Post ID is '.$post_id);
+				Logger::notice('Tribune ID is '.$tribune->id);
 
 				if ($picture->write($data))
 					{
-					trigger_error('Picture written');
+					Logger::notice('Picture written');
 					$picture->raw_tags = $picture->find_tags();
 					$picture->insert();
-					trigger_error('Picture saved');
-					echo "Image saved\n";
+					Logger::notice('Picture saved');
+					Logger::notice("Image saved");
 
 					$images_per_user[$user_name] += 1;
 					}
@@ -149,10 +146,14 @@ while ($line = fgets($f))
 				$link->type = $content_type;
 
 				$link->generate_thumbnail($data);
-				trigger_error('Link created');
+				Logger::notice('Link created');
 				$link->insert();
-				trigger_error('Link saved');
+				Logger::notice('Link saved');
 				}
+			}
+		else
+			{
+			Logger::warning("process_url() failed for $url of type $content_type");
 			}
 		}
 	}

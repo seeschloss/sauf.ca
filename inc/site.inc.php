@@ -13,55 +13,12 @@ class Site
 
 	function latest_json($params)
 		{
-		$db = new DB();
-
-		$pictures = array();
-
-		$where = 'TRUE';
-
-		$count = 500;
-		if (!empty($params['count']))
-			{
-			$count = min(500, $params['count']);
-			}
-
-		if (isset($params['since']))
-			{
-			$where .= ' AND p.id > '.(int)$params['since'];
-			}
-
-		if (isset($params['search']))
-			{
-			$where .= ' AND '.search_condition($params['search']);
-			}
-
-		if (isset($params['animated']))
-			{
-			$where .= ' AND animated';
-			}
-
-		$query = 'SELECT p.*, t.name as tribune_name, t.url as tribune_url
-			FROM pictures p
-			LEFT JOIN tribunes t
-				ON p.tribune_id = t.id
-			WHERE '.$where.'
-			ORDER BY p.date DESC
-			LIMIT '.$count
-		;
-		$result = $db->query($query);
-
-		if ($result) while ($row = $result->fetch_assoc())
-			{
-			$picture = new Picture();
-			$picture->load($row);
-			$pictures[] = $picture;
-			}
+		$thumbnails = $this->thumbnails($params);
 
 		$data = array();
-
-		foreach ($pictures as $picture)
+		foreach ($thumbnails as $thumbnail)
 			{
-			$data[] = $picture->json_array();
+			$data[] = $thumbnail->json_array();
 			}
 
 		return json_encode($data);
@@ -78,7 +35,7 @@ class Site
 		$where = "p.id < ".(int)$until_id;
 		if (isset($_GET['search']))
 			{
-			$where .= " AND ".search_condition($_GET['search']);
+			$where .= " AND ".search_condition($_GET['search'], 'p');
 			}
 
 		if (isset($_GET['animated']))
@@ -206,28 +163,35 @@ HTML;
 			}
 		}
 
-	function thumbnails()
+	function thumbnails($params)
 		{
-		$nb = NB_INITIAL_THUMBNAILS;
+		if (empty($params['count']))
+			{
+			$params['count'] = NB_INITIAL_THUMBNAILS;
+			}
+
 		$db = new DB();
 
 		$where = "TRUE";
-		$uri = urldecode(substr($_SERVER['REQUEST_URI'], 1));
-		if (strpos($uri, '?') === 0)
+
+		if (!empty($params['search']))
 			{
-			$term = substr($uri, 1);
-			$where .= ' AND '.search_condition($term);
+			$where .= ' AND '.search_condition($params['search'], 'p');
 			}
-		else if (strpos($uri, '!') === 0)
+
+		if (!empty($params['animated']))
 			{
-			$term = substr($uri, 1);
-			$where .= ' AND '.search_condition($term);
-			$where .= ' AND animated';
+			$where .= ' AND p.animated';
 			}
-		else if (strpos($uri, '=') === 0)
+
+		if (!empty($params['md5']))
 			{
-			$term = substr($uri, 1);
-			$where .= " AND md5='".$db->escape($term)."'";
+			$where .= " AND p.md5='".$db->escape($params['md5'])."'";
+			}
+
+		if (isset($params['since']))
+			{
+			$where .= ' AND p.date > '.(int)$params['since'];
 			}
 
 		$query = 'SELECT p.*, t.name as tribune_name, t.url as tribune_url
@@ -236,7 +200,7 @@ HTML;
 			  ON p.tribune_id = t.id
 			WHERE '.$where.'
 			ORDER BY p.date DESC
-			LIMIT 0,'.(int)$nb.'
+			LIMIT 0,'.(int)$params['count'].'
 			';
 		$result = $db->query($query);
 
@@ -247,15 +211,16 @@ HTML;
 			$thumbnails[] = $picture;
 			}
 
-
-		if ($GLOBALS['config']['show_links'])
+		if ((empty($params['animated']) or !$params['animated']) && $GLOBALS['config']['show_links'])
 			{
 			$where = "TRUE";
-			$uri = urldecode(substr($_SERVER['REQUEST_URI'], 1));
-			if (strpos($uri, '?') === 0)
+			if (!empty($params['search']))
 				{
-				$term = substr($uri, 1);
-				$where .= ' AND '.search_condition($term);
+				$where .= ' AND '.search_condition($params['search'], 'l');
+				}
+			if (isset($params['since']))
+				{
+				$where .= ' AND l.date > '.(int)$params['since'];
 				}
 			$query = 'SELECT l.*, t.name as tribune_name, t.url as tribune_url
 				FROM links l
@@ -263,7 +228,7 @@ HTML;
 				  ON l.tribune_id = t.id
 				WHERE '.$where.'
 				ORDER BY l.date DESC
-				LIMIT 0,'.(int)$nb.'
+				LIMIT 0,'.(int)$params['count'].'
 				';
 			$result = $db->query($query);
 
@@ -278,7 +243,7 @@ HTML;
 		usort($thumbnails, function($a, $b) {
 			return $a->date < $b->date ? 1 : -1;
 		});
-		$thumbnails = array_slice($thumbnails, 0, $n);
+		$thumbnails = array_slice($thumbnails, 0, $nb);
 
 		return $thumbnails;
 		}
@@ -287,7 +252,24 @@ HTML;
 		{
 		$contents = "";
 
-		$thumbnails = $this->thumbnails();
+		$params = array();
+		$params['count'] = NB_INITIAL_THUMBNAILS;
+		$uri = urldecode(substr($_SERVER['REQUEST_URI'], 1));
+		if (strpos($uri, '?') === 0)
+			{
+			$params['search'] = substr($uri, 1);
+			}
+		else if (strpos($uri, '!') === 0)
+			{
+			$params['search'] = substr($uri, 1);
+			$params['animated'] = true;
+			}
+		else if (strpos($uri, '=') === 0)
+			{
+			$params['md5'] = substr($uri, 1);
+			}
+
+		$thumbnails = $this->thumbnails($params);
 
 		$n = 0;
 		$prefetch_quantity = 20;
@@ -311,7 +293,7 @@ HTML;
 					$prefetch_first .= '<link rel="prefetch" href="'.$thumbnail->animated_src().'" />';
 					$prefetch_last  .= '<link rel="prefetch" href="'.$src.'" />';
 					}
-				else
+				else if (strpos('image/', $thumbnail->type) === 0)
 					{
 					$src = url(PICTURES_PREFIX.'/'.$thumbnail->src, true);
 					$prefetch_later .= '<link rel="prefetch" href="'.$src.'" />';
@@ -357,7 +339,7 @@ HTML;
 	<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 		<head>
 			<title>'.strip_tags($title).'</title>
-			<link rel="stylesheet" type="text/css" href="style.3.css" />
+			<link rel="stylesheet" type="text/css" href="style.4.css" />
 			<link rel="icon" type="image/png" href="sauf.png" />
 			<link rel="dns-prefetch" href="img.sauf.ca" />
 			<link rel="dns-prefetch" href="a.img.sauf.ca" />

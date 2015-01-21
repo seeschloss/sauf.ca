@@ -63,11 +63,20 @@ if (strpos($_SERVER['REQUEST_URI'], '/oauth/dlfp/can_post.json') === 0) {
 } else if (strpos($_SERVER['REQUEST_URI'], '/bloubs.json') === 0) {
 	header('Content-Type: application/json');
 
-	$picture = new Picture();
-	if ($picture->load($_GET['picture'])) {
-		print json_encode(array(
-			$picture->id => $picture->bloubs(),
-		));
+	if (isset($_GET['picture'])) {
+		$picture = new Picture();
+		if ($picture->load($_GET['picture'])) {
+			print json_encode(array(
+				$picture->id => $picture->bloubs(),
+			));
+		}
+	} else if (isset($_GET['link'])) {
+		$link = new Link();
+		if ($link->load($_GET['link'])) {
+			print json_encode(array(
+				$link->id => $link->bloubs(),
+			));
+		}
 	}
 	exit();
 } else if (strpos($_SERVER['REQUEST_URI'], '/nsfw.json') === 0) {
@@ -150,7 +159,7 @@ $content .= $site->viewer().'
 							<a href="!tut_tut">*tut tut*</a>
 						</li>
 						<li>
-							<a href="?houplaboom&lt;">houplababes</a>
+							<a href="/?houplaboom&lt;">houplababes</a>
 						</li>
 					</ul>
 				</div>

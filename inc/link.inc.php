@@ -107,15 +107,17 @@ class Link
 			'description' => $this->description,
 			'target' => $this->target,
 			'user' => $this->user,
+			'user-name' => $this->user,
 			'tags' => explode("\n", trim($this->tags)),
 			'date' => $this->date,
 			'tribune-name' => $this->tribune_name,
 			'tribune-url' => $this->tribune_url,
 			'post-id' => $this->post_id,
-			'thumbnail-src' => url(PICTURES_PREFIX.'/'.$this->thumbnail_src, true),
+			'thumbnail-src' => $this->thumbnail_src ? url(PICTURES_PREFIX.'/'.$this->thumbnail_src, true) : "",
 			'html' => $this->html,
 			'context' => $this->context,
 			'bloubs' => $this->doublons,
+			'type' => $this->type,
 			);
 
 		return $array;
@@ -125,14 +127,14 @@ class Link
 		{
 		$db = new DB();
 		$query = "SELECT COUNT(*)
-			FROM link l
-			WHERE l.target = '".$db->escape($this->target)."'"
+			FROM links l
+			WHERE l.url = '".$db->escape($this->url)."'"
 			;
 		$bloubs = (int)$db->value($query);
 
 		$query = "UPDATE links l
 			SET doublons = ".(int)$bloubs."
-			WHERE l.target = '".$db->escape($this->target)."'"
+			WHERE l.url = '".$db->escape($this->url)."'"
 			;
 		$db->query($query);
 
@@ -239,6 +241,10 @@ class Link
 		$attributes = array();
 		foreach ($this->json_array() as $key => $value)
 			{
+			if ($key == 'tags')
+				{
+				$value = implode(' ', $value);
+				}
 			$attributes[] = 'data-'.$key.'="'.htmlspecialchars($value).'"';
 			}
 		$attributes = join(' ', $attributes);
@@ -254,12 +260,12 @@ class Link
 		$text = '';
 		if ($this->title)
 			{
-			$text .= '<span class="link-title">'.htmlentities($this->title).'</span>';
+			$text .= '<span class="link-title">'.htmlspecialchars($this->title).'</span>';
 			$title .= $this->title;
 			}
 		if ($this->description)
 			{
-			$text .= '<span class="link-description">'.htmlentities($this->description).'</span>';
+			$text .= '<span class="link-description">'.htmlspecialchars($this->description).'</span>';
 			$title .= "\n\n".$this->description;
 			}
 
@@ -287,13 +293,33 @@ class Link
 
 	function parse_html($data)
 		{
-		$dom = new DOMDocument();
-		$dom->loadHTML($data, LIBXML_NOERROR);
+		mb_detect_order(array('UTF-8', 'ISO-8859-15'));
+		$dom = new DOMDocument('1.0', 'UTF-8');
+
+		if ($encoding = mb_detect_encoding($data))
+			{
+			var_dump($encoding);
+			$data = iconv($encoding, 'UTF-8', $data);
+			}
+
+		// Say no to libxml error flooding
+		$dom->encoding = 'UTF-8';
+		@$dom->loadHTML($data, LIBXML_NOERROR);
+		$dom->encoding = 'UTF-8';
+		var_dump($dom->encoding);
 
 		$titles = $dom->getElementsByTagName('title');
 		foreach ($titles as $title)
 			{
-			$this->title = $title->textContent;
+			var_dump($title);
+			if ($encoding = mb_detect_encoding($title->textContent))
+				{
+				$this->title = iconv($encoding, 'UTF-8', $title->textContent);
+				}
+			else
+				{
+				$this->title = $title->textContent;
+				}
 			}
 
 		require_once __DIR__ . '/../lib/Opengraph/src/Opengraph/Meta.php';
@@ -306,12 +332,26 @@ class Link
 
 		if (isset($tags['og:title']))
 			{
-			$this->title = $tags['og:title'];
+			if ($encoding = mb_detect_encoding($tags['og:title']))
+				{
+				$this->title = iconv($encoding, 'UTF-8', $tags['og:title']);
+				}
+			else
+				{
+				$this->title = $tags['og:title'];
+				}
 			}
 
 		if (isset($tags['og:description']))
 			{
-			$this->description = $tags['og:description'];
+			if ($encoding = mb_detect_encoding($tags['og:description']))
+				{
+				$this->description = iconv($encoding, 'UTF-8', $tags['og:description']);
+				}
+			else
+				{
+				$this->description = $tags['og:description'];
+				}
 			}
 
 		if (isset($tags['og:image'][0]['og:image:url']))
@@ -366,7 +406,7 @@ class Link
 			$phantomjs_script = dirname(__FILE__).'/../render.js';
 			$url_arg = escapeshellarg($this->url);
 
-			trigger_error("Using phantomjs to render \"{$this->url}\" to $image_path");
+			Logger::notice("Using phantomjs to render \"{$this->url}\" to $image_path");
 			`"{$GLOBALS['config']['phantomjs']}" --ignore-ssl-errors=true "$phantomjs_script" $url_arg "$image_path"`;
 
 			if (file_exists($image_path))
@@ -410,8 +450,12 @@ function link_render_crop($image_file, $width, $height, $vertical_center = false
 
 	switch ($mime)
 		{
-		case 'image/gif':
 		case 'image/png':
+			$white = imagecolorallocate($image_thumbnail, 255, 255, 255);
+			imagecolortransparent($image_thumbnail, $white);
+			imagealphablending($image_thumbnail, false);
+			imagesavealpha($image_thumbnail, true);
+		case 'image/gif':
 			imagepng($image_thumbnail, $image_file, 9);
 			break;
 		case 'image/jpeg':

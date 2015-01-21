@@ -275,7 +275,7 @@ var showImage = function(image) {
 	row.appendChild(container);
 	element.focus();
 
-	showImageStatus(image);
+	showThumbnailStatus(image);
 
 	var info = document.createElement('div');
 	info.className = 'info';
@@ -598,20 +598,22 @@ var viewerScrollHandler = function(e) {
 };
 
 var attachClickHandler = function(image) {
-	image.onclick = function(e) {
-		e.preventDefault();
+	if (image.target != '_blank') {
+		image.onclick = function(e) {
+			e.preventDefault();
 
-		if (e.shiftKey && e.ctrlKey) {
-			markNsfw(this);
-		} else {
-			showImage(this);
-		}
-	};
+			if (e.shiftKey && e.ctrlKey) {
+				markNsfw(this);
+			} else {
+				showImage(this);
+			}
+		};
+	}
 
 	image.onmouseover = function(e) {
 		e.preventDefault(); e.stopPropagation();
 		startAnimation(this);
-		showImageStatus(this);
+		showThumbnailStatus(this);
 	};
 
 	image.onmouseout = function(e) {
@@ -694,35 +696,37 @@ var resetStatus = function() {
 	}
 }
 
-var showImageStatus = function(image) {
+var showThumbnailStatus = function(thumbnail) {
+	var category = thumbnail.dataset.type.split(/\//)[0];
+
 	var status = document.querySelector('#status');
 	status.innerHTML = '';
 
 	var date = document.createElement('span');
 	date.className = 'date';
-	date.innerHTML = formatDate(image.dataset.date);
+	date.innerHTML = formatDate(thumbnail.dataset.date);
 	status.appendChild(date);
 
-	if (image.dataset.url) {
+	if (thumbnail.dataset.url) {
 		var link = document.createElement('a');
 		link.className = 'link';
-		link.href = image.dataset.url;
+		link.href = thumbnail.dataset.url;
 		link.innerHTML = link.href;
 		link.innerHTML = link.innerHTML.replace(/https?:\/\//, '');
-		if (link.innerHTML.length > 20) {
-			link.innerHTML = link.innerHTML.substr(0, 20) + '...';
+		if (link.innerHTML.length > 40) {
+			link.innerHTML = link.innerHTML.substr(0, 40) + '...';
 		}
 		status.appendChild(link);
 	}
 
 	var bloubs = document.createElement('a');
 	bloubs.className = 'doublons hidden';
-	bloubs.href = '=' + image.dataset.md5;
+	bloubs.href = '=' + thumbnail.dataset.md5;
 	bloubs.innerHTML = 'Doublons';
 	status.appendChild(bloubs);
 
-	if (image.dataset.bloubs > 0) {
-		var nbloubs = image.dataset.bloubs;
+	if (thumbnail.dataset.bloubs > 0) {
+		var nbloubs = thumbnail.dataset.bloubs;
 		if (nbloubs > 1) {
 			nbloubs -= 1;
 			bloubs.className = 'doublons';
@@ -734,13 +738,23 @@ var showImageStatus = function(image) {
 		}
 	} else {
 		var req = new XMLHttpRequest();
-		req.open('GET', 'bloubs.json?picture=' + image.dataset.id, true);
+		switch (category) {
+			case 'image':
+			case 'video':
+				var url = 'bloubs.json?picture=' + thumbnail.dataset.id;
+				break;
+			default:
+				var url = 'bloubs.json?link=' + thumbnail.dataset.id;
+				break;
+		}
+		req.open('GET', url, true);
 		req.onreadystatechange = function(e) {
 			if (req.readyState == 4) {
 				if (req.status == 200 || req.status == 0) {
 					var data = null;
 					if (data = JSON.parse(req.responseText)) {
-						var nbloubs = data[image.dataset.id];
+						var nbloubs = data[thumbnail.dataset.id];
+						thumbnail.dataset.bloubs = nbloubs;
 						if (nbloubs > 1) {
 							nbloubs -= 1;
 							bloubs.className = 'doublons';
@@ -757,27 +771,29 @@ var showImageStatus = function(image) {
 		req.send(null);
 	}
 
-	var google = document.createElement('a');
-	google.className = 'google';
-	google.href = 'https://www.google.com/searchbyimage?hl=en&safe=off&site=search&image_url=' + image.dataset.src;
-	google.innerHTML = 'Google';
-	status.appendChild(google);
+	if (category == 'image' || category == 'video') {
+		var google = document.createElement('a');
+		google.className = 'google';
+		google.href = 'https://www.google.com/searchbyimage?hl=en&safe=off&site=search&image_url=' + thumbnail.dataset.src;
+		google.innerHTML = 'Google';
+		status.appendChild(google);
+	}
 
-	if (image.dataset.tribuneUrl && image.dataset.tribuneName) {
+	if (thumbnail.dataset.tribuneUrl && thumbnail.dataset.tribuneName) {
 		var tribune = document.createElement('a');
 		tribune.className = 'tribune';
-		tribune.href = image.dataset.tribuneUrl;
-		tribune.innerHTML = image.dataset.tribuneName;
+		tribune.href = thumbnail.dataset.tribuneUrl;
+		tribune.innerHTML = thumbnail.dataset.tribuneName;
 		status.appendChild(tribune);
 	}
 
-	if (image.dataset.userName) {
+	if (thumbnail.dataset.userName) {
 		var user = document.createElement('a');
 		user.className = 'user';
-		user.href = image.dataset.tribuneUrl;
-		if (image.dataset.tribuneName == "dlfp") {
+		user.href = thumbnail.dataset.tribuneUrl;
+		if (thumbnail.dataset.tribuneName == "dlfp") {
 			// bombefourchette.com history here
-			var date = new Date(+image.dataset.date * 1000);
+			var date = new Date(+thumbnail.dataset.date * 1000);
 
 			var day = date.getDate();
 			var month = date.getMonth() + 1;
@@ -785,12 +801,12 @@ var showImageStatus = function(image) {
 			if (day   < 10) { day   = "0" + day;    }
 			if (month < 10) { month = "0" + month;  }
 			user.href = "http://bombefourchette.com/t/dlfp/" + year + "-" + month + "-" + day;
-			if (+image.dataset.postId > 0) {
-				user.href += "#" + image.dataset.postId;
+			if (+thumbnail.dataset.postId > 0) {
+				user.href += "#" + thumbnail.dataset.postId;
 			}
-		} else if (image.dataset.tribuneName == "euromussels") {
+		} else if (thumbnail.dataset.tribuneName == "euromussels") {
 			// bombefourchette.com history here
-			var date = new Date(+image.dataset.date * 1000);
+			var date = new Date(+thumbnail.dataset.date * 1000);
 
 			var day = date.getDate();
 			var month = date.getMonth() + 1;
@@ -798,20 +814,24 @@ var showImageStatus = function(image) {
 			if (day   < 10) { day   = "0" + day;    }
 			if (month < 10) { month = "0" + month;  }
 			user.href = "http://bombefourchette.com/t/euromussels/" + year + "-" + month + "-" + day;
-			if (+image.dataset.postId > 0) {
-				user.href += "#" + image.dataset.postId;
+			if (+thumbnail.dataset.postId > 0) {
+				user.href += "#" + thumbnail.dataset.postId;
 			}
 		}
-		user.innerHTML = image.dataset.userName;
+		user.innerHTML = thumbnail.dataset.userName;
 		status.appendChild(user);
 	}
 
 	var title = document.createElement('span');
 	title.className = 'title';
-	title.innerHTML = image.dataset.title;
+	if (category == 'image' || category == 'video') {
+		title.innerHTML = thumbnail.dataset.title;
+	} else {
+		title.innerHTML = thumbnail.dataset.context;
+	}
 	status.appendChild(title);
 
-	if (currentImage && image.dataset.tribuneName == "dlfp") {
+	if (currentImage && thumbnail.dataset.tribuneName == "dlfp") {
 		var upArrow = document.createElement('span');
 		upArrow.id = 'show-comments';
 		upArrow.className = 'up';
@@ -905,7 +925,7 @@ var setCurrentImage = function(image) {
 	currentImage = image;
 	if (currentImage) {
 		currentImage.className += ' current';
-		showImageStatus(image);
+		showThumbnailStatus(image);
 	}
 };
 
@@ -958,9 +978,9 @@ var performSearch = function(term, animated) {
 				var data = null;
 				if (data = JSON.parse(req.responseText)) {
 					document.querySelector('#thumbnails').innerHTML = '';
-					data.sort(function(a, b) { return +a.id > +b.id ? -1 : 1 });
+					data.sort(function(a, b) { return +a.date > +b.date ? -1 : 1 });
 					for (var i in data) {
-						appendNewPicture(data[i]);
+						appendNewThumbnail(data[i]);
 					}
 				}
 			}
@@ -980,7 +1000,7 @@ var resetToLatest = function() {
 					data.sort(function(a, b) { return +a.id > +b.id ? 1 : -1 });
 					document.querySelector('#thumbnails').innerHTML = '';
 					for (var i in data) {
-						prependNewPicture(data[i]);
+						prependNewThumbnail(data[i]);
 					}
 				}
 			}
@@ -989,7 +1009,7 @@ var resetToLatest = function() {
 	req.send(null);
 };
 
-var appendOldPictures = function() {
+var appendOldThumbnails = function() {
 	var oldest = 0;
 	if (document.querySelector('#thumbnails a:last-of-type')) {
 		oldest = +document.querySelector('#thumbnails a:last-of-type').dataset.id;
@@ -1011,7 +1031,7 @@ var appendOldPictures = function() {
 				var data = null;
 				if (data = JSON.parse(req.responseText)) {
 					for (var i in data) {
-						appendNewPicture(data[i]);
+						appendNewThumbnail(data[i]);
 					}
 				}
 			}
@@ -1020,10 +1040,10 @@ var appendOldPictures = function() {
 	req.send(null);
 };
 
-var prependNewPictures = function() {
+var prependNewThumbnails = function() {
 	var newest = 0;
-	if (document.querySelector('#thumbnails a:first-child')) {
-		newest = +document.querySelector('#thumbnails a:first-child').dataset.id;
+	if (document.querySelectorAll('#thumbnails a.picture').length) {
+		newest = +document.querySelectorAll('#thumbnails a.picture').item(0).dataset.date;
 	}
 
 	var url = 'latest.json?since=' + newest;
@@ -1043,7 +1063,7 @@ var prependNewPictures = function() {
 				if (data = JSON.parse(req.responseText)) {
 					data.sort(function(a, b) { return +a.id > +b.id ? 1 : -1 });
 					for (var i in data) {
-						prependNewPicture(data[i]);
+						prependNewThumbnail(data[i]);
 					}
 				}
 			}
@@ -1052,11 +1072,105 @@ var prependNewPictures = function() {
 	req.send(null);
 };
 
-var appendNewPicture = function(data) {
-	if (document.querySelector('#thumbnails a[data-id="' + data.id + '"]')) {
+var appendNewThumbnail = function(data) {
+	if (document.querySelector('#thumbnails a[data-id="' + data.id + '"][data-type="' + data.type + '"]')) {
 		return false;
 	}
 
+	var category = data['type'].split(/\//)[0];
+	switch (category) {
+		case 'image':
+		case 'video':
+			var element = createNewPicture(data);
+			break;
+		default:
+			var element = createNewLink(data);
+			break;
+	}
+
+	var thumbnails = document.querySelector('#thumbnails');
+	thumbnails.appendChild(element);
+	attachClickHandler(element);
+};
+
+var prependNewThumbnail = function(data) {
+	if (document.querySelector('#thumbnails a[data-id="' + data.id + '"][data-type="' + data.type + '"]')) {
+		return false;
+	}
+
+	var category = data['type'].split(/\//)[0];
+	switch (category) {
+		case 'image':
+		case 'video':
+			var element = createNewPicture(data);
+			break;
+		default:
+			var element = createNewLink(data);
+			break;
+	}
+
+	var thumbnails = document.querySelector('#thumbnails');
+	thumbnails.insertBefore(element, thumbnails.firstChild);
+	attachClickHandler(element);
+};
+
+var createNewLink = function(data) {
+	var link = document.createElement('a');
+	link.id = 'thumbnail-' + data.id;
+	link.href = data.url;
+	link.target = '_blank';
+	link.className = 'thumbnail-link link';
+
+	// what a mess
+	link.dataset.id = data['id'];
+	link.dataset.url = data['url'];
+	link.dataset.title = data['title'];
+	link.dataset.description = data['description'];
+	link.dataset.target = data['target'];
+	link.dataset.userName = data['user'];
+	link.dataset.tags = data['tags'].join(', ');
+	link.dataset.date = data['date'];
+	link.dataset.tribuneName = data['tribune-name'];
+	link.dataset.tribuneUrl = data['tribune-url'];
+	link.dataset.postId = data['post-id'];
+	link.dataset.thumbnailSrc = data['thumbnail-src'];
+	link.dataset.context = data['context'];
+	link.dataset.bloubs = data['bloubs'];
+	link.dataset.type = data['type'];
+
+	if (link.dataset.thumbnailSrc) {
+		var img = document.createElement('img');
+		img.src = link.dataset.thumbnailSrc;
+		img.alt = '';
+		img.className = 'link-preview';
+		link.appendChild(img);
+	}
+
+	var text_span = document.createElement('span');
+	text_span.className = 'link-text';
+	text_span.title = '';
+	if (link.dataset.title) {
+		var span = document.createElement('span');
+		span.className = 'link-title';
+		span.innerHTML = link.dataset.title;
+		text_span.title += link.dataset.title;
+		text_span.appendChild(span);
+	}
+
+	if (link.dataset.description) {
+		var span = document.createElement('span');
+		span.className = 'link-description';
+		span.innerHTML = link.dataset.description;
+		text_span.title += link.dataset.description;
+		text_span.appendChild(span);
+	}
+
+	link.appendChild(text_span);
+
+	return link;
+};
+
+var createNewPicture = function(data) {
 	var link = document.createElement('a');
 	link.id = 'thumbnail-' + data.id;
 	link.href = '+' + data.id;
@@ -1076,6 +1190,7 @@ var appendNewPicture = function(data) {
 	link.dataset.id = data['id'];
 	link.dataset.tags = data['tags'].join(', ');
 	link.dataset.md5 = data['md5'];
+	link.dataset.type = data['type'];
 
 	var img = document.createElement('img');
 	img.height = '100';
@@ -1085,51 +1200,7 @@ var appendNewPicture = function(data) {
 
 	link.appendChild(img);
 
-	var thumbnails = document.querySelector('#thumbnails');
-	thumbnails.appendChild(link);
-
-	attachClickHandler(link);
-};
-
-var prependNewPicture = function(data) {
-	if (document.querySelector('#thumbnails a[data-id="' + data.id + '"]')) {
-		return false;
-	}
-
-	var link = document.createElement('a');
-	link.id = 'thumbnail-' + data.id;
-	link.href = '+' + data.id;
-	link.className = 'thumbnail-link';
-
-	// what a mess
-	link.dataset.url = data['url'];
-	link.dataset.src = data['src'];
-	link.dataset.thumbnailSrc = data['thumbnail-src'];
-	link.dataset.animated = data['animated'];
-	link.dataset.userName = data['user'];
-	link.dataset.title = data['title'];
-	link.dataset.tribuneName = data['tribune-name'];
-	link.dataset.tribuneUrl = data['tribune-url'];
-	link.dataset.postId = data['post-id'];
-	link.dataset.date = data['date'];
-	link.dataset.id = data['id'];
-	link.dataset.tags = data['tags'].join(', ');
-	link.dataset.md5 = data['md5'];
-
-	var img = document.createElement('img');
-	img.src = link.dataset.thumbnailSrc;
-	img.alt = '';
-	//img.style.width = '0';
-
-	link.appendChild(img);
-
-	//setTimeout(function() { img.style.width = '100px'; }, 100);
-
-
-	var thumbnails = document.querySelector('#thumbnails');
-	thumbnails.insertBefore(link, thumbnails.firstChild);
-
-	attachClickHandler(link);
+	return link;
 };
 
 document.querySelector('body').onkeydown = function(e) {
@@ -1167,7 +1238,7 @@ document.querySelector('body').onkeydown = function(e) {
 			if (currentImage && !currentImage.className.match(/current/)) {
 				currentImage.className += ' current';
 			}
-			showImageStatus(currentImage);
+			showThumbnailStatus(currentImage);
 			if (currentImage && document.querySelector('#viewer')) {
 				showImage(currentImage);
 			}
@@ -1181,7 +1252,7 @@ document.querySelector('body').onkeydown = function(e) {
 			if (currentImage && !currentImage.className.match(/current/)) {
 				currentImage.className += ' current';
 			}
-			showImageStatus(currentImage);
+			showThumbnailStatus(currentImage);
 			if (currentImage && document.querySelector('#viewer')) {
 				showImage(currentImage);
 			}
@@ -1189,7 +1260,7 @@ document.querySelector('body').onkeydown = function(e) {
 			break;
 		case 37: // left arrow
 			rewindCurrentImage();
-			showImageStatus(currentImage);
+			showThumbnailStatus(currentImage);
 			if (currentImage && document.querySelector('#viewer')) {
 				showImage(currentImage);
 			}
@@ -1197,7 +1268,7 @@ document.querySelector('body').onkeydown = function(e) {
 			break;
 		case 39: // right arrow
 			advanceCurrentImage();
-			showImageStatus(currentImage);
+			showThumbnailStatus(currentImage);
 			if (currentImage && document.querySelector('#viewer')) {
 				showImage(currentImage);
 			}
@@ -1218,7 +1289,7 @@ document.querySelector('body').onkeydown = function(e) {
 			}
 			break;
 		case 82: // r
-			prependNewPictures();
+			prependNewThumbnails();
 			break;
 		case 84: // t
 			if (currentImage) {
@@ -1420,9 +1491,7 @@ var images = document.querySelectorAll('a.thumbnail-link');
 for (var i = 0; i < images.length; i++) {
 	var image = images.item(i);
 
-	if (image.target != '_blank') {
-		attachClickHandler(image);
-	}
+	attachClickHandler(image);
 }
 
 var picture = document.querySelector('#viewer .displayed-picture .media');
@@ -1452,11 +1521,11 @@ if (picture) {
 
 setupUpload();
 
-setInterval(prependNewPictures, 5 * 60 * 1000);
+setInterval(prependNewThumbnails, 5 * 60 * 1000);
 
 document.querySelector('#thumbnails-wrapper').onscroll = function() {
 	if (this.firstElementChild.offsetHeight - this.scrollTop < this.offsetHeight*2) {
-		appendOldPictures();
+		appendOldThumbnails();
 	}
 };
 

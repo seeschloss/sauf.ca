@@ -19,8 +19,16 @@ class DB
 		$result = $this->resource->query($query);
 		if ($error = mysqli_error($this->resource))
 			{
-			trigger_error($error);
-			trigger_error("Query was: ".$query);
+			if (class_exists('Logger'))
+				{
+				Logger::error($error);
+				Logger::error("Query was: ".$query);
+				}
+			else
+				{
+				trigger_error($error);
+				trigger_error("Query was: ".$query);
+				}
 			}
 		return $result;
 		}
