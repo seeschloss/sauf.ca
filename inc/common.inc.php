@@ -2,8 +2,8 @@
 
 require_once dirname(__FILE__).'/../cfg/config.inc.php';
 
-define("UPLOAD_DIR", "/home/seeschloss/sauf.ca/pictures");
-define("UPLOAD_MAX_SIZE", 55*1024*1024);
+define("UPLOAD_DIR", $GLOBALS['config']['upload']['directory']);
+define("UPLOAD_MAX_SIZE", $GLOBALS['config']['upload']['directory']);
 define("NB_INITIAL_THUMBNAILS", 250);
 define("THUMBNAIL_SIZE", 100);
 

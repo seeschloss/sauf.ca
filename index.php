@@ -7,7 +7,7 @@ if (strpos($_SERVER['REQUEST_URI'], '/latest.json') !== 0 and !empty($_GET['sear
 
 require 'inc/common.inc.php';
 
-$site = new Site("Sauf.ça");
+$site = new Site($GLOBALS['config']['title']);
 
 if (strpos($_SERVER['REQUEST_URI'], '/oauth/dlfp/can_post.json') === 0) {
 	header('Content-Type: application/json');
@@ -180,7 +180,7 @@ $content .= $site->viewer().'
 			<div id="content">
 				<div id="thumbnails-wrapper">
 					<div id="thumbnails">'.
-						$site->thumbnails()
+						$site->show_thumbnails()
 					.'</div>
 				</div>
 			</div>

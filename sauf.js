@@ -133,11 +133,27 @@ var fullImageHandlers = function(img) {
 };
 
 var previousImage = function(image) {
-	return image.previousSibling;
+	if (!image) {
+		return null;
+	}
+
+	var previous = image.previousSibling;
+	while (previous && previous.target == '_blank') {
+		previous = previous.previousSibling;
+	}
+	return previous;
 };
 
 var nextImage = function(image) {
-	return image.nextSibling;
+	if (!image) {
+		return null;
+	}
+
+	var next = image.nextSibling;
+	while (next && next.target == '_blank') {
+		next = next.nextSibling;
+	}
+	return next;
 };
 
 var attachProgressUpdateHandler = function(video, progress) {
@@ -221,7 +237,7 @@ var showImage = function(image) {
 	
 	var container = document.createElement('div');
 	var element;
-	if (image.dataset.src.match(/.webm$/)) {
+	if (image.dataset.src && image.dataset.src.match(/.webm$/)) {
 		container.className = 'video-container displayed-picture';
 
 		element = document.createElement('video');
@@ -247,7 +263,7 @@ var showImage = function(image) {
 	container.appendChild(element);
 	container.appendChild(right);
 
-	if (image.dataset.src.match(/.webm$/)) {
+	if (image.dataset.src && image.dataset.src.match(/.webm$/)) {
 		var progress = document.createElement('progress');
 		progress.value = 0;
 		progress.max = 100;
@@ -847,11 +863,12 @@ var advanceCurrentImage = function() {
 		document.querySelector('body').className = '';
 	}
 
+	var image;
 	if (!currentImage) {
 		currentImage = document.querySelector('#thumbnails a:first-child');
-	} else if (currentImage.nextSibling) {
+	} else if (image = nextImage(currentImage)) {
+		currentImage = image;
 		currentImage.className = currentImage.className.replace(/current/, '');
-		currentImage = currentImage.nextSibling;
 	}
 
 	if (currentImage && !currentImage.className.match(/current/)) {
@@ -866,11 +883,12 @@ var rewindCurrentImage = function() {
 		document.querySelector('body').className = '';
 	}
 
+	var image;
 	if (!currentImage) {
 		currentImage = document.querySelector('#thumbnails a:first-child');
-	} else if (currentImage.previousSibling) {
+	} else if (image = previousImage(currentImage)) {
+		currentImage = image;
 		currentImage.className = currentImage.className.replace(/current/, '');
-		currentImage = currentImage.previousSibling;
 	}
 
 	if (currentImage && !currentImage.className.match(/current/)) {
@@ -1402,7 +1420,9 @@ var images = document.querySelectorAll('a.thumbnail-link');
 for (var i = 0; i < images.length; i++) {
 	var image = images.item(i);
 
-	attachClickHandler(image);
+	if (image.target != '_blank') {
+		attachClickHandler(image);
+	}
 }
 
 var picture = document.querySelector('#viewer .displayed-picture .media');

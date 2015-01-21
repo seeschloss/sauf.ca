@@ -236,9 +236,6 @@ class Link
 			$extra .= ' data-bloubs="'.(int)$this->doublons.'"';
 			}
 
-		$src = url(PICTURES_PREFIX.'/'.$this->thumbnail_src, true);
-		$href = url('+'.$this->id);
-
 		$attributes = array();
 		foreach ($this->json_array() as $key => $value)
 			{
@@ -246,12 +243,37 @@ class Link
 			}
 		$attributes = join(' ', $attributes);
 
+		$title = '';
+		$html = '';
+		if ($this->thumbnail_src)
+			{
+			$url = url(PICTURES_PREFIX.'/'.$this->thumbnail_src, true);
+			$html .= '<img class="link-preview" src="'.$url.'" />';
+			}
+
+		$text = '';
+		if ($this->title)
+			{
+			$text .= '<span class="link-title">'.htmlentities($this->title).'</span>';
+			$title .= $this->title;
+			}
+		if ($this->description)
+			{
+			$text .= '<span class="link-description">'.htmlentities($this->description).'</span>';
+			$title .= "\n\n".$this->description;
+			}
+
+		$html .= '<span class="link-text" title="'.str_replace('"', '\'', $title).'">';
+		$html .= $text;
+		$html .= '</span>';
+
+		
+
 		return
-			'<a id="thumbnail-'.$this->id.'" href="'.$href.'" class="thumbnail-link" '.
+			'<a target="_blank" id="thumbnail-'.$this->id.'" href="'.$this->url.'" class="thumbnail-link link" '.
 					$attributes.
 					$extra.
-					'>'.
-				'<img height="'.THUMBNAIL_SIZE.'" width="'.THUMBNAIL_SIZE.'" src="'.$src.'" alt="" />'.
+					'>'.$html.
 			'</a>';
 		}
 
@@ -281,8 +303,6 @@ class Link
 		$reader = new Opengraph\Reader();
 		$reader->parse($data);
 		$tags = $reader->getArrayCopy();
-
-		var_dump($tags);
 
 		if (isset($tags['og:title']))
 			{
@@ -317,9 +337,10 @@ class Link
 			if ($extension)
 				{
 				$dir = date('Y-m-d', $this->date);
-				$filename = md5($image).'.'.$extension;
+				$filename = md5($this->url).'.'.$extension;
 				$image_path = UPLOAD_DIR.'/'.$dir.'/'.$filename;
 				file_put_contents($image_path, $image_data);
+				link_render_crop($image_path, 200, 200, true, $mime);
 				$this->thumbnail_path = $image_path;
 				$this->thumbnail_src = $dir.'/'.$filename;
 				}
@@ -336,20 +357,21 @@ class Link
 			}
 
 		
-		if (!$this->description && !$this->thumbnail_src)
+		if (!$this->description && !$this->thumbnail_src && file_exists($GLOBALS['config']['phantomjs']))
 			{
 			$dir = date('Y-m-d', $this->date);
 			$filename = md5($this->url).'.png';
 			$image_path = UPLOAD_DIR.'/'.$dir.'/'.$filename;
-			$phantomjs = dirname(__FILE__).'/../lib/phantomjs/phantomjs-1.9.8-linux-x86_64/bin/phantomjs';
-			$phantomjs_script = dirname(__FILE__).'/../lib/phantomjs/render.js';
+
+			$phantomjs_script = dirname(__FILE__).'/../render.js';
 			$url_arg = escapeshellarg($this->url);
+
 			trigger_error("Using phantomjs to render \"{$this->url}\" to $image_path");
-			`"$phantomjs" "$phantomjs_script" $url_arg "$image_path"`;
+			`"{$GLOBALS['config']['phantomjs']}" --ignore-ssl-errors=true "$phantomjs_script" $url_arg "$image_path"`;
 
 			if (file_exists($image_path))
 				{
-				link_render_crop($image_path, 200, 200);
+				link_render_crop($image_path, 200, 200, false, "image/png");
 				$this->thumbnail_path = $image_path;
 				$this->thumbnail_src = $dir.'/'.$filename;
 				}
@@ -359,27 +381,42 @@ class Link
 		if ($this->thumbnail_src)
 			{
 			$url = url(PICTURES_PREFIX.'/'.$this->thumbnail_src, true);
-			$html .= '<a class="link-thumbnail" href="'.$url.'" />';
+			$html .= '<img class="link-preview" src="'.$url.'" />';
 			}
 
 		$this->html = $html;
 		}
 	}
 
-function link_render_crop($image_file, $width, $height)
+function link_render_crop($image_file, $width, $height, $vertical_center = false, $mime)
 	{
-	$im = imagecreatefrompng($image_file);
+	switch ($mime)
+		{
+		case 'image/gif':  $im = imagecreatefromgif($image_file); break;
+		case 'image/jpeg': $im = imagecreatefromjpeg($image_file); break;
+		case 'image/png':  $im = imagecreatefrompng($image_file); break;
+		}
 
 	list($width_orig, $height_orig, $image_type) = getimagesize($image_file);
 	$corig = min($width_orig, $height_orig);
 
 	$lmarge = ($width_orig  - $corig) / 2;
-	$hmarge = 0;
+	$hmarge = $vertical_center ? ($height_orig  - $corig) / 2 : 0;
 
 	$image_thumbnail = imagecreatetruecolor($width, $height);
 
 	imagecopyresampled($image_thumbnail, $im, 0, 0, $lmarge, $hmarge, $width, $height, $corig, $corig);
 	@unlink($image_file);
-	imagepng($image_thumbnail, $image_file, 9);
+
+	switch ($mime)
+		{
+		case 'image/gif':
+		case 'image/png':
+			imagepng($image_thumbnail, $image_file, 9);
+			break;
+		case 'image/jpeg':
+			imagejpeg($image_thumbnail, $image_file, 99);
+			break;
+		}
 	}
 

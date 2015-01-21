@@ -115,7 +115,7 @@ class Site
 
 	function name()
 		{
-		return htmlentities($this->name, ENT_QUOTES, 'UTF-8');
+		return $this->name;
 		}
 
 	function viewer()
@@ -230,8 +230,6 @@ HTML;
 			$where .= " AND md5='".$db->escape($term)."'";
 			}
 
-		$pictures = array();
-
 		$query = 'SELECT p.*, t.name as tribune_name, t.url as tribune_url
 			FROM pictures p
 			LEFT JOIN tribunes t
@@ -246,36 +244,76 @@ HTML;
 			{
 			$picture = new Picture();
 			$picture->load($row);
-			$pictures[] = $picture;
+			$thumbnails[] = $picture;
 			}
 
+
+		if ($GLOBALS['config']['show_links'])
+			{
+			$where = "TRUE";
+			$uri = urldecode(substr($_SERVER['REQUEST_URI'], 1));
+			if (strpos($uri, '?') === 0)
+				{
+				$term = substr($uri, 1);
+				$where .= ' AND '.search_condition($term);
+				}
+			$query = 'SELECT l.*, t.name as tribune_name, t.url as tribune_url
+				FROM links l
+				LEFT JOIN tribunes t
+				  ON l.tribune_id = t.id
+				WHERE '.$where.'
+				ORDER BY l.date DESC
+				LIMIT 0,'.(int)$nb.'
+				';
+			$result = $db->query($query);
+
+			if ($result) while ($row = $result->fetch_assoc())
+				{
+				$link = new Link();
+				$link->load($row);
+				$thumbnails[] = $link;
+				}
+			}
+
+		usort($thumbnails, function($a, $b) {
+			return $a->date < $b->date ? 1 : -1;
+		});
+		$thumbnails = array_slice($thumbnails, 0, $n);
+
+		return $thumbnails;
+		}
+
+	function show_thumbnails()
+		{
 		$contents = "";
+
+		$thumbnails = $this->thumbnails();
 
 		$n = 0;
 		$prefetch_quantity = 20;
 		$prefetch_first = "";
 		$prefetch_later = "";
 		$prefetch_last = "";
-		foreach ($pictures as $picture)
+		foreach ($thumbnails as $thumbnail)
 			{
-			$contents .= $picture->thumbnail();
+			$contents .= $thumbnail->thumbnail();
 			if ($n < $prefetch_quantity)
 				{
 				$n++;
 
-				if ($picture->type == 'video/webm')
+				if ($thumbnail->type == 'video/webm')
 					{
-					$prefetch_later .= '<link rel="prefetch" href="'.$picture->animated_src().'" />';
+					$prefetch_later .= '<link rel="prefetch" href="'.$thumbnail->animated_src().'" />';
 					}
-				else if ($picture->type == 'image/gif')
+				else if ($thumbnail->type == 'image/gif')
 					{
-					$src = url(PICTURES_PREFIX.'/'.$picture->src, true);
-					$prefetch_first .= '<link rel="prefetch" href="'.$picture->animated_src().'" />';
+					$src = url(PICTURES_PREFIX.'/'.$thumbnail->src, true);
+					$prefetch_first .= '<link rel="prefetch" href="'.$thumbnail->animated_src().'" />';
 					$prefetch_last  .= '<link rel="prefetch" href="'.$src.'" />';
 					}
 				else
 					{
-					$src = url(PICTURES_PREFIX.'/'.$picture->src, true);
+					$src = url(PICTURES_PREFIX.'/'.$thumbnail->src, true);
 					$prefetch_later .= '<link rel="prefetch" href="'.$src.'" />';
 					}
 				}
@@ -318,7 +356,7 @@ HTML;
 '	<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 	<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 		<head>
-			<title>'.htmlspecialchars($title).'</title>
+			<title>'.strip_tags($title).'</title>
 			<link rel="stylesheet" type="text/css" href="style.3.css" />
 			<link rel="icon" type="image/png" href="sauf.png" />
 			<link rel="dns-prefetch" href="img.sauf.ca" />

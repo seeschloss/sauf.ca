@@ -16,4 +16,11 @@ $GLOBALS['config'] = array(
 		),
 	),
 	'contact' => '<a href="mailto:see@sauf.ca">contact</a>',
+	'title' => 'Sauf.ça',
+	'show_links' => true,
+	'upload' => array(
+		'directory' => dirname(__FILE__)."/../pictures",
+		'max_size' => 50*1024*1024,
+	),
+	'phantomjs' => '/usr/bin/phantomjs',
 );

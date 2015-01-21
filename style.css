@@ -611,7 +611,7 @@ a.thumbnail-link
 	vertical-align: middle;
 	}
 
-a.thumbnail-link *
+a.thumbnail-link > img, a.thumbnail-link.link > span.link-text, a.thumbnail-link > video
 	{
 	margin: 3px;
 	border: 5px solid lightgrey;
@@ -623,6 +623,49 @@ a.thumbnail-link *
 	display: inline-block;
 	transition: width 0.2s;
 	pointer-events: none;
+	}
+
+a.thumbnail-link.link > span.link-text
+	{
+	position: relative;
+	background: transparent;
+	line-height: 8px;
+	color: white;
+	text-shadow: 0 0 1px black, 0 0 1px black, 0 0 2px black, 0 0 5px black;
+	pointer-events: all;
+	overflow: hidden;
+	font-style: normal;
+	}
+
+a.thumbnail-link.link > span.link-text:hover
+	{
+	background: rgba(0,0,0,0.5);
+	}
+
+a.thumbnail-link.link > span.link-text > span
+	{
+	width: 100px;
+	position: relative;
+	z-index: 2;
+	}
+
+a.thumbnail-link.link .link-title
+	{
+	font-size: 9px;
+	font-weight: bold;
+	}
+
+a.thumbnail-link.link .link-description
+	{
+	font-size: 9px;
+	margin-left: 1ex;
+	}
+
+a.thumbnail-link.link img
+	{
+	width: 100px;
+	height: 100px;
+	position: absolute;
 	}
 
 a.thumbnail-link.current *
