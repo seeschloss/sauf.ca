@@ -222,7 +222,7 @@ function process_url($url, &$content_type)
 
 require_once dirname(__FILE__).'/logger.inc.php';
 require_once dirname(__FILE__).'/db.inc.php';
-//require_once dirname(__FILE__).'/url.inc.php';
+require_once dirname(__FILE__).'/url.inc.php';
 require_once dirname(__FILE__).'/site.inc.php';
 require_once dirname(__FILE__).'/picture.inc.php';
 require_once dirname(__FILE__).'/link.inc.php';

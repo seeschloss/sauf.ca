@@ -310,9 +310,15 @@ class Picture
 
 		$db->query($query);
 
-		$this->id = $db->insert_id();
+		if ($this->id = $db->insert_id())
+			{
+			$db->query('INSERT INTO unique_ids (picture_id) VALUES ('.$this->id.')');
+			}
+		else
+			{
+			Logger::error('Could not insert picture, query was: '.$query);
+			}
 
-		$db->query('INSERT INTO unique_ids (picture_id) VALUES ('.$this->id.')');
 
 		return $this->id;
 		}

@@ -126,9 +126,14 @@ while ($line = fgets($f))
 					Logger::notice('Picture written');
 					$picture->raw_tags = $picture->find_tags();
 					$picture->init_tags();
-					$picture->insert();
-					Logger::notice('Picture saved');
-					Logger::notice("Image saved");
+					if ($picture->insert())
+						{
+						Logger::notice('Picture saved');
+						}
+					else
+						{
+						Logger::error('Could not save picture');
+						}
 
 					$images_per_user[$user_name] += 1;
 					}
