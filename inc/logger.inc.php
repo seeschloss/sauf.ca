@@ -2,18 +2,18 @@
 
 class Logger
 	{
-	public static function notice($message)
+	public static function __callStatic($function, $arguments)
 		{
-		trigger_error($message);
-		}
+		$level = $function;
+		$message = $arguments[0];
 
-	public static function warning($message)
-		{
-		trigger_error($message);
-		}
+		$file = __DIR__ . '/../logs/' . date('Y-m-d').'.log';
+		
+		if (!file_exists(__DIR__ . '/../logs/'))
+			{
+			mkdir(__DIR__ . '/../logs/');
+			}
 
-	public static function error($message)
-		{
-		trigger_error($message);
+		file_put_contents($file, gmdate('Y-m-d\TH:i:s').' [' . $level . '] ' . $message . "\n", FILE_APPEND);
 		}
 	}
