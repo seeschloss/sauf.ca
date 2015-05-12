@@ -11,6 +11,19 @@ class Site
 		$this->name = $name;
 		}
 
+	function latest_tsv($params)
+		{
+		$thumbnails = $this->thumbnails($params);
+
+		$lines = array();
+		foreach ($thumbnails as $thumbnail)
+			{
+			$lines[] = $thumbnail->tsv_line();
+			}
+
+		return join("\n", $lines)."\n";
+		}
+
 	function latest_json($params)
 		{
 		$thumbnails = $this->thumbnails($params);
@@ -24,41 +37,34 @@ class Site
 		return json_encode($data);
 		}
 
-	function history_json($until_id, $count = 250)
+	function history_json($until, $count = 250)
 		{
-		$db = new DB();
+		$params = array(
+			'until' => $until,
+			'count' => $count,
+		);
 
-		$count = min(500, $count);
-
-		$pictures = array();
-
-		$where = "p.id < ".(int)$until_id;
 		if (isset($_GET['search']))
 			{
-			$where .= " AND ".search_condition($_GET['search'], 'p');
+			$params['search'] = $_GET['search'];
 			}
 
 		if (isset($_GET['animated']))
 			{
-			$where .= ' AND animated';
+			$params['animated'] = $_GET['animated'];
 			}
 
-		$query = 'SELECT p.*, t.name as tribune_name, t.url as tribune_url
-			FROM pictures p
-			LEFT JOIN tribunes t
-				ON p.tribune_id = t.id
-			WHERE '.$where.'
-			ORDER BY p.date DESC
-			LIMIT '.$count
-		;
-		$result = $db->query($query);
-
-		if ($result) while ($row = $result->fetch_assoc())
+		if (isset($_GET['pictures']))
 			{
-			$picture = new Picture();
-			$picture->load($row);
-			$pictures[] = $picture;
+			$params['pictures'] = $_GET['pictures'];
 			}
+
+		if (isset($_GET['links']))
+			{
+			$params['links'] = $_GET['links'];
+			}
+
+		$pictures = $this->thumbnails($params);
 
 		$data = array();
 
@@ -170,18 +176,47 @@ HTML;
 			$params['count'] = NB_INITIAL_THUMBNAILS;
 			}
 
+		if (empty($params['offset']))
+			{
+			$params['offset'] = 0;
+			}
+
 		$db = new DB();
 
 		$where = "TRUE";
+
+		if (!empty($params['until']))
+			{
+			$where = "p.date < ".(int)$params['until'];
+			}
 
 		if (!empty($params['search']))
 			{
 			$where .= ' AND '.search_condition($params['search'], 'p');
 			}
 
-		if (!empty($params['animated']))
+		$or = array();
+		if (isset($params['animated']) and $params['animated'])
+			{
+			$or[] = 'p.animated';
+			}
+		if (isset($params['pictures']) and $params['pictures'])
+			{
+			$or[] = 'NOT p.animated';
+			}
+		if (count($or))
+			{
+			$where .= ' AND ('.join(' OR ', $or).')';
+			}
+
+		if (isset($params['pictures']) and !$params['pictures'])
 			{
 			$where .= ' AND p.animated';
+			}
+
+		if (isset($params['animated']) and !$params['animated'])
+			{
+			$where .= ' AND NOT p.animated';
 			}
 
 		if (!empty($params['md5']))
@@ -194,13 +229,15 @@ HTML;
 			$where .= ' AND p.date > '.(int)$params['since'];
 			}
 
-		$query = 'SELECT p.*, t.name as tribune_name, t.url as tribune_url
+		$query = 'SELECT p.*, t.name as tribune_name, t.url as tribune_url, u.id as unique_id
 			FROM pictures p
 			LEFT JOIN tribunes t
 			  ON p.tribune_id = t.id
+			INNER JOIN unique_ids u
+			  ON p.id = u.picture_id
 			WHERE '.$where.'
 			ORDER BY p.date DESC
-			LIMIT 0,'.(int)$params['count'].'
+			LIMIT '.(int)$params['offset'].','.(int)$params['count'].'
 			';
 		$result = $db->query($query);
 
@@ -211,21 +248,23 @@ HTML;
 			$thumbnails[] = $picture;
 			}
 
-		if ((empty($params['animated']) or !$params['animated']) && $GLOBALS['config']['show_links'])
+		if ((!isset($params['links']) or $params['links']) && $GLOBALS['config']['show_links'])
 			{
 			$where = "TRUE";
 			if (!empty($params['search']))
 				{
-				$where .= ' AND '.search_condition($params['search'], 'l');
+				$where .= ' AND '.search_condition($params['search'], 'l', "OR l.description LIKE '%".$db->escape($params['search'])."%'");
 				}
 			if (isset($params['since']))
 				{
 				$where .= ' AND l.date > '.(int)$params['since'];
 				}
-			$query = 'SELECT l.*, t.name as tribune_name, t.url as tribune_url
+			$query = 'SELECT l.*, t.name as tribune_name, t.url as tribune_url, u.id as unique_id
 				FROM links l
 				LEFT JOIN tribunes t
 				  ON l.tribune_id = t.id
+				INNER JOIN unique_ids u
+				  ON l.id = u.link_id
 				WHERE '.$where.'
 				ORDER BY l.date DESC
 				LIMIT 0,'.(int)$params['count'].'
@@ -243,7 +282,7 @@ HTML;
 		usort($thumbnails, function($a, $b) {
 			return $a->date < $b->date ? 1 : -1;
 		});
-		$thumbnails = array_slice($thumbnails, 0, $nb);
+		$thumbnails = array_slice($thumbnails, 0, $params['count']);
 
 		return $thumbnails;
 		}
@@ -258,11 +297,14 @@ HTML;
 		if (strpos($uri, '?') === 0)
 			{
 			$params['search'] = substr($uri, 1);
+			$params['animated'] = true;
+			$params['pictures'] = true;
 			}
 		else if (strpos($uri, '!') === 0)
 			{
 			$params['search'] = substr($uri, 1);
 			$params['animated'] = true;
+			$params['pictures'] = false;
 			}
 		else if (strpos($uri, '=') === 0)
 			{
@@ -339,7 +381,7 @@ HTML;
 	<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 		<head>
 			<title>'.strip_tags($title).'</title>
-			<link rel="stylesheet" type="text/css" href="style.4.css" />
+			<link rel="stylesheet" type="text/css" href="style.5.css" />
 			<link rel="icon" type="image/png" href="sauf.png" />
 			<link rel="dns-prefetch" href="img.sauf.ca" />
 			<link rel="dns-prefetch" href="a.img.sauf.ca" />

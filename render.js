@@ -10,7 +10,7 @@ Render given urls
 @param callbackPerUrl Function called after finishing each URL, including the last URL
 @param callbackFinal Function called after finishing everything
 */
-RenderUrlToFile = function(url, width, height, filename, callback) {
+RenderUrlToFile = function(url, width, height, filename, filename_pdf, callback) {
     var page, retrieve, urlIndex, webpage;
     webpage = require("webpage");
 
@@ -25,6 +25,10 @@ RenderUrlToFile = function(url, width, height, filename, callback) {
         if (status === "success") {
             return window.setTimeout((function() {
                 page.render(filename);
+                if (filename_pdf) {
+                    page.render(filename_pdf);
+                    console.log("Rendered PDF at '" + filename_pdf + "'");
+                }
                 page.close();
                 return callback(status, url, filename);
             }), 200);
@@ -34,12 +38,12 @@ RenderUrlToFile = function(url, width, height, filename, callback) {
     });
 };
 
-if (system.args.length != 3) {
-    console.log("Usage: phantomjs render.js url filename");
+if (system.args.length < 3) {
+    console.log("Usage: phantomjs render.js url filename [filename.pdf]");
 	phantom.exit();
 }
 
-RenderUrlToFile(system.args[1], 1280, 960, system.args[2], (function(status, url, filename) {
+RenderUrlToFile(system.args[1], 1280, 960, system.args[2], system.args[3], (function(status, url, filename) {
     if (status !== "success") {
         console.log("Unable to render '" + url + "'");
     } else {

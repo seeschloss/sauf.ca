@@ -45,6 +45,11 @@ if (strpos($_SERVER['REQUEST_URI'], '/oauth/dlfp/can_post.json') === 0) {
 	$oauth = new OAuth();
 	print $oauth->conversation($id);
 	exit();
+} else if (strpos($_SERVER['REQUEST_URI'], '/feeds/all.tsv') === 0) {
+	header('Content-Type: text/tab-separated-values; charset=utf8');
+
+	print $site->latest_tsv($_GET);
+	exit();
 } else if (strpos($_SERVER['REQUEST_URI'], '/latest.json') === 0) {
 	header('Content-Type: application/json');
 
@@ -84,7 +89,11 @@ if (strpos($_SERVER['REQUEST_URI'], '/oauth/dlfp/can_post.json') === 0) {
 
 	$picture = new Picture();
 	if ($picture->load($_GET['picture']) and strpos($picture->tags, "nsfw") === FALSE) {
-		$picture->tags .= "nsfw";
+		if ($picture->tags) {
+			$picture->tags .= ", nsfw";
+		} else {
+			$picture->tags = "nsfw";
+		}
 		$picture->update();
 	}
 
@@ -142,7 +151,14 @@ $content .= $site->viewer().'
 		<div id="wrapper">
 			<div id="sitebar">
 				<h1><a href="/">'.$site->name().'</a></h1><h2>Les images postées sur les tribunes de la moulosphère francophone.</h2>
-				<div class="search"><form id="search"><input type="checkbox" name="animated" title="GIF animés uniquement" /><input placeholder="Search..." type="search" name="search" /></form></div>
+				<div class="search">
+					<form id="search">
+						<input type="checkbox" checked name="links" title="Afficher les liens" id="checkbox-links" /><label for="checkbox-links">liens</label><br />
+						<input type="checkbox" checked name="pictures" title="Afficher les images" id="checkbox-pictures" /><label for="checkbox-pictures">images fixes</label><br />
+						<input type="checkbox" checked name="animated" title="GIF animés uniquement" id="checkbox-animated" /><label for="checkbox-animated">animations</label><br />
+						<input type="search" placeholder="Search..." name="search" />
+					</form>
+				</div>
 				<div class="header">'.$site->header().'</div>
 				<div class="links">
 					<ul>

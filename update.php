@@ -125,6 +125,7 @@ while ($line = fgets($f))
 					{
 					Logger::notice('Picture written');
 					$picture->raw_tags = $picture->find_tags();
+					$picture->init_tags();
 					$picture->insert();
 					Logger::notice('Picture saved');
 					Logger::notice("Image saved");

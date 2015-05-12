@@ -12,6 +12,7 @@ class Picture
 	public $title = "";
 	public $url = "";
 	public $tribune_id = 0;
+	public $tribune_name = "";
 	public $post_id = 0;
 	public $tags = "";
 	public $raw_tags = "";
@@ -19,6 +20,7 @@ class Picture
 	public $type = '';
 	public $md5 = '';
 	public $doublons = null;
+	public $unique_id = 0;
 
 	public $new = false;
 
@@ -38,6 +40,31 @@ class Picture
 
 		return isset($content_types[$content_type]);
 		}
+
+	function post_time() {
+		return date('YmdHis', $this->date);
+	}
+
+	function post_clock() {
+		return date('H:i:s', $this->date);
+	}
+
+	function tsv_line() {
+		$array = array(
+			$this->unique_id,
+			$this->post_time(),
+			"",
+			$this->user,
+			$this->post_clock().'@'.$this->tribune_name.' <a href="'.$this->url.'">['.$this->type.']</a> <i>'.$this->tags.'</i>',
+		);
+
+		foreach ($array as &$value) {
+			$value = str_replace("\t", " ", $value);
+			$value = str_replace("\n", " ", $value);
+		}
+
+		return join("\t", $array);
+	}
 
 	function load_by_post_id($post_id)
 		{
@@ -285,6 +312,8 @@ class Picture
 
 		$this->id = $db->insert_id();
 
+		$db->query('INSERT INTO unique_ids (picture_id) VALUES ('.$this->id.')');
+
 		return $this->id;
 		}
 
@@ -322,8 +351,62 @@ class Picture
 		return false;
 		}
 
+	function find_tags_imagga()
+		{
+		$url = 'http://api.imagga.com/v1/tagging?url='.url(PICTURES_PREFIX.'/'.$this->src, false);
+
+		$c = curl_init();
+
+		curl_setopt($c, CURLOPT_USERAGENT, "Sauf.ca");
+		curl_setopt($c, CURLOPT_URL, $url);
+		curl_setopt($c, CURLOPT_HTTPHEADER, array(
+			'Authorization: Basic '.$GLOBALS['config']['autotagging']['imagga-auth'],
+		));
+		curl_setopt($c, CURLOPT_RETURNTRANSFER, true);
+		curl_setopt($c, CURLOPT_CONNECTTIMEOUT, 2);
+		curl_setopt($c, CURLOPT_TIMEOUT, 15);
+
+		Logger::notice('Asking imagga for tags: '.$url);
+
+		$a = curl_exec($c);
+		$data = json_decode($a, true);
+		$tags = array();
+		if (is_array($data))
+			{
+			return $a;
+			}
+
+		return "";
+		}
+
+	function og_tags()
+		{
+		$url = new URL($this->url);
+		$tags = $url->tags();
+		if (count($tags))
+			{
+			return $tags;
+			}
+		else
+			{
+			return false;
+			}
+		}
+
 	function find_tags()
 		{
+		if ($tags = $this->og_tags())
+			{
+			return $tags;
+			}
+
+		if (isset($GLOBALS['config']['autotagging']['imagga-auth']))
+			{
+			return $this->find_tags_imagga();
+			}
+
+		return '';
+
 		if ($this->type == 'video/webm')
 			{
 			$path = $this->thumbnail_path;
@@ -337,6 +420,23 @@ class Picture
 		$tags = implode(' ', explode("\n", $tags));
 
 		return $tags;
+		}
+
+	function init_tags()
+		{
+		$data = json_decode($this->raw_tags, true);
+		if (is_array($data))
+			{
+			foreach ($data['results'][0]['tags'] as $tag)
+				{
+				if ($tag['confidence'] > 20)
+					{
+					$tags[] = $tag['tag'];
+					}
+				}
+			}
+
+		$this->tags = implode(', ', $tags);
 		}
 
 	function user()
@@ -360,9 +460,9 @@ class Picture
 			}
 
 		$src = $this->thumbnail_src ? url(PICTURES_PREFIX.'/'.$this->thumbnail_src, true) : "http://img.sauf.ca/blank.png";
-		$href = url('+'.$this->id);
+		$href = '+'.$this->id;
 		return
-			'<a id="thumbnail-'.$this->id.'" href="'.$href.'" class="thumbnail-link picture" '.
+			'<span class="thumbnail"><a id="thumbnail-'.$this->id.'" href="'.$href.'" class="thumbnail-link picture" '.
 					' data-id="'.$this->id.'"'.
 					' data-title="'.htmlspecialchars($this->title).'"'.
 					' data-url="'.htmlspecialchars($this->url).'"'.
@@ -378,7 +478,7 @@ class Picture
 					$extra.
 					'>'.
 				'<img height="'.THUMBNAIL_SIZE.'" width="'.THUMBNAIL_SIZE.'" src="'.$src.'" alt="" />'.
-			'</a>';
+			'</a></span>';
 		}
 
 	function generate_thumbnail()

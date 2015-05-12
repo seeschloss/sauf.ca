@@ -9,7 +9,7 @@ define("THUMBNAIL_SIZE", 100);
 
 define("PICTURES_PREFIX", 'pictures');
 
-function search_condition($search, $table = 'p')
+function search_condition($search, $table = 'p', $extra_or_conditions = '')
 	{
 	$db = new DB();
 	$conditions = array();
@@ -36,7 +36,7 @@ function search_condition($search, $table = 'p')
 				{
 				$term = 'tut_tu%t';
 				}
-			$condition = "$table.user LIKE '$term%' OR $table.title LIKE '%$term%' OR $table.url LIKE '%$term%' OR $table.tags LIKE '%$term%' OR $table.raw_tags LIKE '%$term%'";
+			$condition = "$table.user LIKE '$term%' OR $table.title LIKE '%$term%' OR $table.url LIKE '%$term%' OR $table.tags LIKE '%$term%' OR $table.raw_tags LIKE '%$term%'".$extra_or_conditions;
 			}
 
 		$conditions[] = "(".$condition.")";
@@ -148,6 +148,7 @@ function process_url($url, &$content_type)
 	if (preg_match('/https?:\/\/(www\.)?youtube.com\/[^.]*$/', $url)) {
 		$safe_url = escapeshellarg($url);
 		$url = `youtube-dl -g -f webm {$safe_url}`;
+		$url = trim($url);
 	} elseif (false && preg_match('/https?:\/\/([a-z])*\.wikipedia\.org\/wiki\/File:(.)*$/', $url, $matches)) {
 		// Needs some testing
 		$filename = $matches[2];
@@ -182,6 +183,7 @@ function process_url($url, &$content_type)
 
 	if (!$a = curl_exec($c))
 		{
+		Logger::error("URL was: ".$url);
 		Logger::error(curl_error($c));
 		return false;
 		}
@@ -220,6 +222,7 @@ function process_url($url, &$content_type)
 
 require_once dirname(__FILE__).'/logger.inc.php';
 require_once dirname(__FILE__).'/db.inc.php';
+//require_once dirname(__FILE__).'/url.inc.php';
 require_once dirname(__FILE__).'/site.inc.php';
 require_once dirname(__FILE__).'/picture.inc.php';
 require_once dirname(__FILE__).'/link.inc.php';

@@ -340,7 +340,7 @@ class OAuth
 		{
 		$posts = array();
 
-		$url = 'http://moules.ssz.fr/conversation/' . $from_id . '.json';
+		$url = 'http://dlfp.moul.es/conversation/' . $from_id . '.json';
 
 		$c = curl_init();
 

@@ -5,11 +5,14 @@ class Link
 	public $id = 0;
 	public $thumbnail_path = null;
 	public $thumbnail_src = null;
+	public $screenshot_path = null;
+	public $screenshot_src = null;
 	public $date = 0;
 	public $url = "";
 	public $title = "";
 	public $description = "";
 	public $tribune_id = 0;
+	public $tribune_name = "";
 	public $post_id = 0;
 	public $tags = "";
 	public $raw_tags = "";
@@ -18,6 +21,7 @@ class Link
 	public $html = '';
 	public $context = '';
 	public $doublons = null;
+	public $unique_id = 0;
 
 	public $new = false;
 
@@ -29,6 +33,38 @@ class Link
 		{
 		return true;
 		}
+
+	function post_time() {
+		return date('YmdHis', $this->date);
+	}
+
+	function post_clock() {
+		return date('H:i:s', $this->date);
+	}
+
+	function tsv_line() {
+		$text = array();
+		if ($this->title) {
+			$text[] = $this->title;
+		}
+		if ($this->description) {
+			$text[] = $this->description;
+		}
+		$array = array(
+			$this->unique_id,
+			$this->post_time(),
+			"",
+			$this->user,
+			$this->post_clock().'@'.$this->tribune_name.' <a href="'.$this->url.'">[url]</a> '.join(' - ', $text),
+		);
+
+		foreach ($array as &$value) {
+			$value = str_replace("\t", " ", $value);
+			$value = str_replace("\n", " ", $value);
+		}
+
+		return join("\t", $array);
+	}
 
 	function load_by_post_id($post_id)
 		{
@@ -99,6 +135,18 @@ class Link
 
 	function json_array()
 		{
+		$screenshot_png = "";
+		$screenshot_pdf = "";
+		if (file_exists($this->screenshot_path))
+			{
+			$screenshot_png = url(PICTURES_PREFIX.'/'.$this->screenshot_src, false);
+			$pdf_screenshot_path = str_replace('.png', '.pdf', $this->screenshot_path);
+			if (file_exists($pdf_screenshot_path))
+				{
+				$pdf_src = str_replace('.png', '.pdf', $this->screenshot_src);
+				$screenshot_pdf = url(PICTURES_PREFIX.'/'.$pdf_src, false);
+				}
+			}
 		$array = array
 			(
 			'id' => $this->id,
@@ -114,6 +162,8 @@ class Link
 			'tribune-url' => $this->tribune_url,
 			'post-id' => $this->post_id,
 			'thumbnail-src' => $this->thumbnail_src ? url(PICTURES_PREFIX.'/'.$this->thumbnail_src, true) : "",
+			'screenshot-png' => $screenshot_png,
+			'screenshot-pdf' => $screenshot_pdf,
 			'html' => $this->html,
 			'context' => $this->context,
 			'bloubs' => $this->doublons,
@@ -161,6 +211,8 @@ class Link
 			user = \''.$db->escape($this->user).'\',
 			thumbnail_path = \''.$db->escape($this->thumbnail_path).'\',
 			thumbnail_src = \''.$db->escape($this->thumbnail_src).'\',
+			screenshot_path = \''.$db->escape($this->screenshot_path).'\',
+			screenshot_src = \''.$db->escape($this->screenshot_src).'\',
 			date = \''.$db->escape($this->date).'\',
 			url = \''.$db->escape($this->url).'\',
 			title = \''.$db->escape($this->title).'\',
@@ -180,14 +232,14 @@ class Link
 
 		$this->id = $db->insert_id();
 
+		$db->query('INSERT INTO unique_ids (link_id) VALUES ('.$this->id.')');
+
 		return $this->id;
 		}
 
 	function update()
 		{
 		if ($this->id
-		and $this->thumbnail_path
-		and $this->thumbnail_src
 		and $this->url
 		and $this->date
 		and $this->tribune_id)
@@ -198,6 +250,8 @@ class Link
 				user = \''.$db->escape($this->user).'\',
 				thumbnail_path = \''.$db->escape($this->thumbnail_path).'\',
 				thumbnail_src = \''.$db->escape($this->thumbnail_src).'\',
+				screenshot_path = \''.$db->escape($this->screenshot_path).'\',
+				screenshot_src = \''.$db->escape($this->screenshot_src).'\',
 				date = \''.$db->escape($this->date).'\',
 				url = \''.$db->escape($this->url).'\',
 				title = \''.$db->escape($this->title).'\',
@@ -247,7 +301,6 @@ class Link
 				}
 			$attributes[] = 'data-'.$key.'="'.htmlspecialchars($value).'"';
 			}
-		$attributes = join(' ', $attributes);
 
 		$title = '';
 		$html = '';
@@ -269,25 +322,167 @@ class Link
 			$title .= "\n\n".$this->description;
 			}
 
+		$links = "";
+		if (file_exists($this->screenshot_path))
+			{
+			$attributes[] = 'data-screenshot-png="'.htmlspecialchars(url(PICTURES_PREFIX.'/'.$this->screenshot_src, false)).'"';
+			$links = "<a target='_blank' class='link-png' href='".url(PICTURES_PREFIX.'/'.$this->screenshot_src, false)."'>PNG</a>";
+			$pdf_screenshot_path = str_replace('.png', '.pdf', $this->screenshot_path);
+			if (file_exists($pdf_screenshot_path))
+				{
+				$pdf_src = str_replace('.png', '.pdf', $this->screenshot_src);
+				$attributes[] = 'data-screenshot-pdf="'.htmlspecialchars(url(PICTURES_PREFIX.'/'.$pdf_src, false)).'"';
+				$links .= "<a target='_blank' class='link-pdf' href='".url(PICTURES_PREFIX.'/'.$pdf_src)."'>PDF</a>";
+				}
+			}
+
 		$html .= '<span class="link-text" title="'.str_replace('"', '\'', $title).'">';
 		$html .= $text;
+
 		$html .= '</span>';
 
-		
+		$attributes = join(' ', $attributes);
 
-		return
-			'<a target="_blank" id="thumbnail-'.$this->id.'" href="'.$this->url.'" class="thumbnail-link link" '.
+		$html =
+			'<span class="thumbnail"><a target="_blank" id="thumbnail-'.$this->id.'" href="'.$this->url.'" class="thumbnail-link link" '.
 					$attributes.
 					$extra.
 					'>'.$html.
 			'</a>';
+
+		if ($links)
+			{
+			$html .= '<span class="link-extra">'.$links.'</span>';
+			}
+
+		$html .= '</span>';
+
+		return $html;
 		}
 
 	function generate_thumbnail($data)
 		{
 		if ($this->type == 'text/html')
 			{
-			return $this->parse_html($data);
+			//$this->parse_html($data);
+			$this->retrieve_embed();
+			}
+
+		$html = '';
+		if ($this->title)
+			{
+			$html .= '<span class="link-title">'.htmlentities($this->title).'</span>';
+			}
+		if ($this->description)
+			{
+			$html .= '<span class="link-description">'.htmlentities($this->description).'</span>';
+			}
+
+		if (file_exists($this->screenshot_path))
+			{
+			$extra = "<a class='link-png' href='".$this->screenshot_src."'>PNG</a>";
+			$pdf_screenshot_path = str_replace('.png', '.pdf', $this->screenshot_path);
+			if (file_exists($pdf_screenshot_path))
+				{
+				$extra = "<a class='link-pdf' href='".str_replace('.png', '.pdf', $this->screenshot_src)."'>PDF</a>";
+				}
+			$html .= '<span class="link-extra">'.$extra.'</span>';
+			}
+
+		if ($this->thumbnail_src)
+			{
+			$url = url(PICTURES_PREFIX.'/'.$this->thumbnail_src, true);
+			$html .= '<img class="link-preview" src="'.$url.'" />';
+			}
+
+		$this->html = $html;
+		}
+
+	function retrieve_embed()
+		{
+		$url = 'http://ssz.fr/embed/?url=' . urlencode($this->url);
+		Logger::notice("Asking for info on '".$this->url."' at '".$url."'");
+		$json = file_get_contents($url);
+		if ($data = json_decode($json, TRUE))
+			{
+			if (isset($data['title']))
+				{
+				$this->title = $data['title'];
+				}
+
+			if (isset($data['description']))
+				{
+				$this->description = $data['description'];
+				}
+
+			if (isset($data['image_url']))
+				{
+				$image_data = file_get_contents($data['image_url']);
+				$finfo = new Finfo(FILEINFO_MIME);
+				@list($mime, $charset) = explode(';', $finfo->buffer($image_data));
+
+				$extension = false;
+				switch ($mime)
+					{
+					case 'image/jpeg':
+						$extension = 'jpg';
+						break;
+					case 'image/gif':
+						$extension = 'gif';
+						break;
+					case 'image/png':
+						$extension = 'png';
+						break;
+					}
+
+				if ($extension)
+					{
+					$dir = date('Y-m-d', $this->date);
+					$filename = md5($this->url).'.'.$extension;
+					$image_path = UPLOAD_DIR.'/'.$dir.'/t'.$filename;
+					file_put_contents($image_path, $image_data);
+					link_render_crop($image_path, $image_path, 50, 50, true, $mime);
+					$this->thumbnail_path = $image_path;
+					$this->thumbnail_src = $dir.'/t'.$filename;
+					}
+				}
+
+			if (isset($data['screenshot_png_full']))
+				{
+				$dir = date('Y-m-d', $this->date);
+				$filename = md5($this->url).'.png';
+				$screenshot_path = UPLOAD_DIR.'/'.$dir.'/'.$filename;
+
+				$png = file_get_contents($data['screenshot_png_full']);
+				file_put_contents($screenshot_path, $png);
+
+				$this->screenshot_path = $screenshot_path;
+				$this->screenshot_src = $dir.'/'.$filename;
+				}
+
+			if (!file_exists($this->thumbnail_path) && isset($data['screenshot_png']))
+				{
+				$dir = date('Y-m-d', $this->date);
+				$filename = md5($this->url).'.png';
+				$thumbnail_path = UPLOAD_DIR.'/'.$dir.'/t'.$filename;
+
+				$png = file_get_contents($data['screenshot_png']);
+				file_put_contents($thumbnail_path, $png);
+
+				$this->thumbnail_path = $thumbnail_path;
+				$this->thumbnail_src = $dir.'/t'.$filename;
+				}
+
+			if (isset($data['screenshot_pdf']))
+				{
+				$dir = date('Y-m-d', $this->date);
+				$filename_pdf = md5($this->url).'.pdf';
+				$screenshot_path_pdf = UPLOAD_DIR.'/'.$dir.'/'.$filename_pdf;
+				$pdf_path = UPLOAD_DIR.'/'.$dir.'/'.$filename_pdf;
+
+				$pdf = file_get_contents($data['screenshot_pdf']);
+				file_put_contents($pdf_path, $pdf);
+				}
 			}
 		}
 
@@ -378,66 +573,58 @@ class Link
 				{
 				$dir = date('Y-m-d', $this->date);
 				$filename = md5($this->url).'.'.$extension;
-				$image_path = UPLOAD_DIR.'/'.$dir.'/'.$filename;
+				$image_path = UPLOAD_DIR.'/'.$dir.'/t'.$filename;
 				file_put_contents($image_path, $image_data);
-				link_render_crop($image_path, 200, 200, true, $mime);
+				link_render_crop($image_path, $image_path, 200, 200, true, $mime);
 				$this->thumbnail_path = $image_path;
-				$this->thumbnail_src = $dir.'/'.$filename;
+				$this->thumbnail_src = $dir.'/t'.$filename;
 				}
 			}
 
-		$html = '';
-		if ($this->title)
-			{
-			$html .= '<span class="link-title">'.htmlentities($this->title).'</span>';
-			}
-		if ($this->description)
-			{
-			$html .= '<span class="link-description">'.htmlentities($this->description).'</span>';
-			}
-
 		
-		if (!$this->description && !$this->thumbnail_src && file_exists($GLOBALS['config']['phantomjs']))
+		if (file_exists($GLOBALS['config']['phantomjs']))
 			{
 			$dir = date('Y-m-d', $this->date);
 			$filename = md5($this->url).'.png';
-			$image_path = UPLOAD_DIR.'/'.$dir.'/'.$filename;
+			$filename_pdf = md5($this->url).'.pdf';
+			$screenshot_path = UPLOAD_DIR.'/'.$dir.'/'.$filename;
+			$screenshot_path_pdf = UPLOAD_DIR.'/'.$dir.'/'.$filename_pdf;
 
 			$phantomjs_script = dirname(__FILE__).'/../render.js';
 			$url_arg = escapeshellarg($this->url);
 
-			Logger::notice("Using phantomjs to render \"{$this->url}\" to $image_path");
-			`"{$GLOBALS['config']['phantomjs']}" --ignore-ssl-errors=true "$phantomjs_script" $url_arg "$image_path"`;
+			Logger::notice("Using phantomjs to render \"{$this->url}\" to $screenshot_path and $screenshot_path_pdf");
+			`"{$GLOBALS['config']['phantomjs']}" --ignore-ssl-errors=true "$phantomjs_script" $url_arg "$screenshot_path" "$screenshot_path_pdf"`;
 
-			if (file_exists($image_path))
+			if (file_exists($screenshot_path))
 				{
-				link_render_crop($image_path, 200, 200, false, "image/png");
-				$this->thumbnail_path = $image_path;
-				$this->thumbnail_src = $dir.'/'.$filename;
+				$this->screenshot_path = $screenshot_path;
+				$this->screenshot_src = $dir.'/'.$filename;
+
+				if (!file_exists($this->thumbnail_path))
+					{
+					$thumbnail_path = UPLOAD_DIR.'/'.$dir.'/t'.$filename;
+
+					link_render_crop($screenshot_path, $thumbnail_path, 200, 200, false, "image/png");
+
+					$this->thumbnail_path = $thumbnail_path;
+					$this->thumbnail_src = $dir.'/t'.$filename;
+					}
 				}
 			}
-
-
-		if ($this->thumbnail_src)
-			{
-			$url = url(PICTURES_PREFIX.'/'.$this->thumbnail_src, true);
-			$html .= '<img class="link-preview" src="'.$url.'" />';
-			}
-
-		$this->html = $html;
 		}
 	}
 
-function link_render_crop($image_file, $width, $height, $vertical_center = false, $mime)
+function link_render_crop($image_filename, $destination_filename, $width, $height, $vertical_center = false, $mime)
 	{
 	switch ($mime)
 		{
-		case 'image/gif':  $im = imagecreatefromgif($image_file); break;
-		case 'image/jpeg': $im = imagecreatefromjpeg($image_file); break;
-		case 'image/png':  $im = imagecreatefrompng($image_file); break;
+		case 'image/gif':  $im = imagecreatefromgif($image_filename); break;
+		case 'image/jpeg': $im = imagecreatefromjpeg($image_filename); break;
+		case 'image/png':  $im = imagecreatefrompng($image_filename); break;
 		}
 
-	list($width_orig, $height_orig, $image_type) = getimagesize($image_file);
+	list($width_orig, $height_orig, $image_type) = getimagesize($image_filename);
 	$corig = min($width_orig, $height_orig);
 
 	$lmarge = ($width_orig  - $corig) / 2;
@@ -446,7 +633,7 @@ function link_render_crop($image_file, $width, $height, $vertical_center = false
 	$image_thumbnail = imagecreatetruecolor($width, $height);
 
 	imagecopyresampled($image_thumbnail, $im, 0, 0, $lmarge, $hmarge, $width, $height, $corig, $corig);
-	@unlink($image_file);
+	@unlink($destination_filename);
 
 	switch ($mime)
 		{
@@ -456,10 +643,10 @@ function link_render_crop($image_file, $width, $height, $vertical_center = false
 			imagealphablending($image_thumbnail, false);
 			imagesavealpha($image_thumbnail, true);
 		case 'image/gif':
-			imagepng($image_thumbnail, $image_file, 9);
+			imagepng($image_thumbnail, $destination_filename, 9);
 			break;
 		case 'image/jpeg':
-			imagejpeg($image_thumbnail, $image_file, 99);
+			imagejpeg($image_thumbnail, $destination_filename, 99);
 			break;
 		}
 	}
