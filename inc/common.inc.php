@@ -201,6 +201,9 @@ function process_url($url, &$content_type)
 		}
 
 	$content_type = curl_getinfo($c, CURLINFO_CONTENT_TYPE);
+	if (strpos($content_type, ';') !== FALSE) {
+		list($content_type) = explode(';', $content_type);
+	}
 	curl_setopt($c, CURLOPT_HEADER, false);
 	curl_setopt($c, CURLOPT_NOBODY, false);
 	curl_setopt($c, CURLOPT_HTTPGET, true);
