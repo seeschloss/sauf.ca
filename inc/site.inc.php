@@ -258,7 +258,7 @@ HTML;
 			INNER JOIN unique_ids u
 			  ON p.id = u.picture_id
 			WHERE '.$where.'
-			ORDER BY p.date DESC
+			ORDER BY u.id DESC, p.date DESC
 			LIMIT '.(int)$params['offset'].','.(int)$params['count'].'
 			';
 		$result = $db->query($query);
@@ -288,7 +288,7 @@ HTML;
 				INNER JOIN unique_ids u
 				  ON l.id = u.link_id
 				WHERE '.$where.'
-				ORDER BY l.date DESC
+				ORDER BY u.id DESC, l.date DESC
 				LIMIT 0,'.(int)$params['count'].'
 				';
 			$result = $db->query($query);
@@ -302,7 +302,7 @@ HTML;
 			}
 
 		usort($thumbnails, function($a, $b) {
-			return $a->date < $b->date ? 1 : -1;
+			return $a->unique_id < $b->unique_id ? 1 : -1;
 		});
 		$thumbnails = array_slice($thumbnails, 0, $params['count']);
 
