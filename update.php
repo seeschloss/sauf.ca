@@ -27,6 +27,8 @@ while ($line = fgets($f))
 
 	if (!empty($matches[1])) foreach ($matches[1] as $url)
 		{
+		$url = html_entity_decode($url);
+
 		$source_url = $url;
 
 		Logger::notice('URL is '.$url);
