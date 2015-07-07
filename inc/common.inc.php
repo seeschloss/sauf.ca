@@ -56,9 +56,9 @@ function url($path, $random = false)
 		{
 		$SERVERS = array
 			(
-			'http://a.img.sauf.ca',
-			'http://b.img.sauf.ca',
-			'http://c.img.sauf.ca',
+			'//a.img.sauf.ca',
+			'//b.img.sauf.ca',
+			'//c.img.sauf.ca',
 			);
 
 		$index = abs(crc32($path)) % count($SERVERS);
