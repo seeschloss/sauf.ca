@@ -246,7 +246,7 @@ class Link
 			{
 			$db = new DB();
 
-			$query = 'UPDATE pictures SET
+			$query = 'UPDATE links SET
 				user = \''.$db->escape($this->user).'\',
 				thumbnail_path = \''.$db->escape($this->thumbnail_path).'\',
 				thumbnail_src = \''.$db->escape($this->thumbnail_src).'\',
