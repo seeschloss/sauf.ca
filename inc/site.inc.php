@@ -251,6 +251,11 @@ HTML;
 			$where .= ' AND p.date > '.(int)$params['since'];
 			}
 
+		if (isset($params['last']))
+			{
+			$where .= ' AND u.id > '.(int)$params['last'];
+			}
+
 		$query = 'SELECT p.*, t.name as tribune_name, t.url as tribune_url, u.id as unique_id
 			FROM pictures p
 			LEFT JOIN tribunes t
@@ -280,6 +285,10 @@ HTML;
 			if (isset($params['since']))
 				{
 				$where .= ' AND l.date > '.(int)$params['since'];
+				}
+			if (isset($params['last']))
+				{
+				$where .= ' AND u.id > '.(int)$params['last'];
 				}
 			$query = 'SELECT l.*, t.name as tribune_name, t.url as tribune_url, u.id as unique_id
 				FROM links l
