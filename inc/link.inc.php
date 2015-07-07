@@ -42,6 +42,30 @@ class Link
 		return date('H:i:s', $this->date);
 	}
 
+	function xml_element() {
+		$text = array();
+		if ($this->title) {
+			$text[] = $this->title;
+		}
+		if ($this->description) {
+			$text[] = $this->description;
+		}
+
+		$message = $this->post_clock().'@'.$this->tribune_name.' <a href="'.$this->url.'">[url]</a> '.join(' - ', $text);
+		$login = htmlspecialchars($this->user);
+
+		$xml = <<<XML
+	<post time="{$this->post_time()}" id="{$this->unique_id}">
+		<info></info>
+		<message>$message</message>
+		<login>$login</login>
+	</post>
+
+XML;
+
+		return $xml;
+	}
+
 	function tsv_line() {
 		$text = array();
 		if ($this->title) {
@@ -150,6 +174,8 @@ class Link
 		$array = array
 			(
 			'id' => $this->id,
+			'unique-id' => $this->unique_id,
+			'media' => 'link',
 			'url' => $this->url,
 			'title' => $this->title,
 			'description' => $this->description,

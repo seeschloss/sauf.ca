@@ -50,6 +50,11 @@ if (strpos($_SERVER['REQUEST_URI'], '/oauth/dlfp/can_post.json') === 0) {
 
 	print $site->latest_tsv($_GET);
 	exit();
+} else if (strpos($_SERVER['REQUEST_URI'], '/feeds/all.xml') === 0) {
+	header('Content-Type: application/xml; charset=utf8');
+
+	print $site->latest_xml($_GET);
+	exit();
 } else if (strpos($_SERVER['REQUEST_URI'], '/latest.json') === 0) {
 	header('Content-Type: application/json');
 

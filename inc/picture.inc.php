@@ -49,6 +49,22 @@ class Picture
 		return date('H:i:s', $this->date);
 	}
 
+	function xml_element() {
+		$message = $this->post_clock()."@".$this->tribune_name." <a href=\"".htmlspecialchars($this->url)."\">[".$this->type."]</a> <i>".htmlspecialchars($this->tags)."</i>";
+		$login = htmlspecialchars($this->user);
+
+		$xml = <<<XML
+	<post time="{$this->post_time()}" id="{$this->unique_id}">
+		<info></info>
+		<message>$message</message>
+		<login>$login</login>
+	</post>
+
+XML;
+
+		return $xml;
+	}
+
 	function tsv_line() {
 		$array = array(
 			$this->unique_id,
@@ -164,6 +180,8 @@ class Picture
 		$array = array
 			(
 			'id' => $this->id,
+			'unique-id' => $this->unique_id,
+			'media' => $this->animated ? 'animated' : 'image',
 			'title' => $this->title,
 			'url' => $this->url,
 			'user' => $this->user,
@@ -470,6 +488,8 @@ class Picture
 		return
 			'<span class="thumbnail"><a id="thumbnail-'.$this->id.'" href="'.$href.'" class="thumbnail-link picture" '.
 					' data-id="'.$this->id.'"'.
+					' data-unique-id="'.$this->unique_id.'"'.
+					' data-media="'.($this->animated ? 'animated' : 'image').'"'.
 					' data-title="'.htmlspecialchars($this->title).'"'.
 					' data-url="'.htmlspecialchars($this->url).'"'.
 					' data-tags="'.htmlspecialchars(implode(', ', explode("\n", trim($this->tags)))).'"'.

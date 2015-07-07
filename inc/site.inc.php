@@ -11,6 +11,28 @@ class Site
 		$this->name = $name;
 		}
 
+	function latest_xml($params)
+		{
+		$thumbnails = $this->thumbnails($params);
+
+		$xml = <<<XML
+<!DOCTYPE board SYSTEM "tp-0.1.dtd">
+<board site="https://sauf.ca">
+
+XML;
+
+		foreach ($thumbnails as $thumbnail)
+			{
+			$xml .= $thumbnail->xml_element();
+			}
+
+		$xml .= <<<XML
+</board>
+
+XML;
+		return $xml;
+		}
+
 	function latest_tsv($params)
 		{
 		$thumbnails = $this->thumbnails($params);
