@@ -360,11 +360,10 @@ class Link
 		return $html;
 		}
 
-	function generate_thumbnail($data)
+	function generate_thumbnail()
 		{
 		if ($this->type == 'text/html')
 			{
-			//$this->parse_html($data);
 			$this->retrieve_embed();
 			}
 
@@ -400,7 +399,7 @@ class Link
 
 	function retrieve_embed()
 		{
-		$url = 'http://ssz.fr/embed/?url=' . urlencode($this->url);
+		$url = 'http://fprin.tf/?url=' . urlencode($this->url);
 		Logger::notice("Asking for info on '".$this->url."' at '".$url."'");
 		$json = file_get_contents($url);
 		if ($data = json_decode($json, TRUE))
@@ -482,134 +481,6 @@ class Link
 
 				$pdf = file_get_contents($data['screenshot_pdf']);
 				file_put_contents($pdf_path, $pdf);
-				}
-			}
-		}
-
-	function parse_html($data)
-		{
-		mb_detect_order(array('UTF-8', 'ISO-8859-15'));
-		$dom = new DOMDocument('1.0', 'UTF-8');
-
-		if ($encoding = mb_detect_encoding($data))
-			{
-			var_dump($encoding);
-			$data = iconv($encoding, 'UTF-8', $data);
-			}
-
-		// Say no to libxml error flooding
-		$dom->encoding = 'UTF-8';
-		@$dom->loadHTML($data, LIBXML_NOERROR);
-		$dom->encoding = 'UTF-8';
-		var_dump($dom->encoding);
-
-		$titles = $dom->getElementsByTagName('title');
-		foreach ($titles as $title)
-			{
-			var_dump($title);
-			if ($encoding = mb_detect_encoding($title->textContent))
-				{
-				$this->title = iconv($encoding, 'UTF-8', $title->textContent);
-				}
-			else
-				{
-				$this->title = $title->textContent;
-				}
-			}
-
-		require_once __DIR__ . '/../lib/Opengraph/src/Opengraph/Meta.php';
-		require_once __DIR__ . '/../lib/Opengraph/src/Opengraph/Opengraph.php';
-		require_once __DIR__ . '/../lib/Opengraph/src/Opengraph/Reader.php';
-
-		$reader = new Opengraph\Reader();
-		$reader->parse($data);
-		$tags = $reader->getArrayCopy();
-
-		if (isset($tags['og:title']))
-			{
-			if ($encoding = mb_detect_encoding($tags['og:title']))
-				{
-				$this->title = iconv($encoding, 'UTF-8', $tags['og:title']);
-				}
-			else
-				{
-				$this->title = $tags['og:title'];
-				}
-			}
-
-		if (isset($tags['og:description']))
-			{
-			if ($encoding = mb_detect_encoding($tags['og:description']))
-				{
-				$this->description = iconv($encoding, 'UTF-8', $tags['og:description']);
-				}
-			else
-				{
-				$this->description = $tags['og:description'];
-				}
-			}
-
-		if (isset($tags['og:image'][0]['og:image:url']))
-			{
-			$image_data = file_get_contents($tags['og:image'][0]['og:image:url']);
-			$finfo = new Finfo(FILEINFO_MIME);
-			@list($mime, $charset) = explode(';', $finfo->buffer($image_data));
-
-			$extension = false;
-			switch ($mime)
-				{
-				case 'image/jpeg':
-					$extension = 'jpg';
-					break;
-				case 'image/gif':
-					$extension = 'gif';
-					break;
-				case 'image/png':
-					$extension = 'png';
-					break;
-				}
-
-			if ($extension)
-				{
-				$dir = date('Y-m-d', $this->date);
-				$filename = md5($this->url).'.'.$extension;
-				$image_path = UPLOAD_DIR.'/'.$dir.'/t'.$filename;
-				file_put_contents($image_path, $image_data);
-				link_render_crop($image_path, $image_path, 200, 200, true, $mime);
-				$this->thumbnail_path = $image_path;
-				$this->thumbnail_src = $dir.'/t'.$filename;
-				}
-			}
-
-		
-		if (file_exists($GLOBALS['config']['phantomjs']))
-			{
-			$dir = date('Y-m-d', $this->date);
-			$filename = md5($this->url).'.png';
-			$filename_pdf = md5($this->url).'.pdf';
-			$screenshot_path = UPLOAD_DIR.'/'.$dir.'/'.$filename;
-			$screenshot_path_pdf = UPLOAD_DIR.'/'.$dir.'/'.$filename_pdf;
-
-			$phantomjs_script = dirname(__FILE__).'/../render.js';
-			$url_arg = escapeshellarg($this->url);
-
-			Logger::notice("Using phantomjs to render \"{$this->url}\" to $screenshot_path and $screenshot_path_pdf");
-			`"{$GLOBALS['config']['phantomjs']}" --ignore-ssl-errors=true "$phantomjs_script" $url_arg "$screenshot_path" "$screenshot_path_pdf"`;
-
-			if (file_exists($screenshot_path))
-				{
-				$this->screenshot_path = $screenshot_path;
-				$this->screenshot_src = $dir.'/'.$filename;
-
-				if (!file_exists($this->thumbnail_path))
-					{
-					$thumbnail_path = UPLOAD_DIR.'/'.$dir.'/t'.$filename;
-
-					link_render_crop($screenshot_path, $thumbnail_path, 200, 200, false, "image/png");
-
-					$this->thumbnail_path = $thumbnail_path;
-					$this->thumbnail_src = $dir.'/t'.$filename;
-					}
 				}
 			}
 		}
