@@ -215,7 +215,12 @@ function process_url($url, &$content_type)
 		}
 	else
 		{
-		Logger::error("Link downloaded (".strlen($image_data)." bytes)");
+		Logger::notice("Link downloaded (".strlen($image_data)." bytes)");
+
+		if (strlen($image_data) < 200) {
+			Logger::notice($image_data);
+		}
+
 		return $image_data;
 		}
 
