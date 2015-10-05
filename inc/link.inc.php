@@ -29,7 +29,7 @@ class Link
 		{
 		}
 
-	static function acceptable($data, $content_type)
+	static function acceptable($content_type)
 		{
 		return true;
 		}

@@ -141,6 +141,73 @@ function is_acceptable($content_type)
 	return isset($content_types[$type]);
 	}
 
+function get_content_type(&$url)
+	{
+	$url = html_entity_decode($url);
+
+	if (preg_match('/https?:\/\/(www\.)?youtube.com\/[^.]*$/', $url)) {
+		$safe_url = escapeshellarg($url);
+		$url = `youtube-dl -g -f webm {$safe_url}`;
+		$url = trim($url);
+	} elseif (false && preg_match('/https?:\/\/([a-z])*\.wikipedia\.org\/wiki\/File:(.)*$/', $url, $matches)) {
+		// Needs some testing
+		$filename = $matches[2];
+		$md5 = md5($filename);
+		$url = 'https://upload.wikimedia.org/wikipedia/commons/' . substr($md5, 0, 1) . '/' . substr($md5, 0, 2) . '/' . $filename;
+	}
+
+	$details = parse_url($url);
+
+	$c = curl_init();
+
+	$referer = $details['scheme'].'://'.$details['host'];
+
+	if (strpos($details['host'], 'ecx.images-amazon') !== FALSE) {
+		$nobody = false;
+	} else {
+		$nobody = true;
+	}
+
+	curl_setopt($c, CURLOPT_USERAGENT, "Mozilla/5.0 (X11; Linux x86_64; rv:29.0) Gecko/20100101 Firefox/29.0");
+	curl_setopt($c, CURLOPT_REFERER, $referer);
+	curl_setopt($c, CURLOPT_URL, $url);
+	curl_setopt($c, CURLOPT_HEADER, true);
+	curl_setopt($c, CURLOPT_NOBODY, $nobody);
+	curl_setopt($c, CURLOPT_RETURNTRANSFER, true);
+	curl_setopt($c, CURLOPT_SSL_VERIFYPEER, false);
+	curl_setopt($c, CURLOPT_CONNECTTIMEOUT, 2);
+	curl_setopt($c, CURLOPT_TIMEOUT, 15);
+	curl_setopt($c, CURLOPT_AUTOREFERER, true);
+	curl_setopt($c, CURLOPT_FOLLOWLOCATION, true);
+	curl_setopt($c, CURLOPT_MAXREDIRS, 5);
+
+	if (!$a = curl_exec($c))
+		{
+		Logger::error("URL was: ".$url);
+		Logger::error(curl_error($c));
+		return false;
+		}
+
+	if (($code = curl_getinfo($c, CURLINFO_HTTP_CODE)) >= 400)
+		{
+		Logger::error('HTTP error '.$code." for $url");
+		return false;
+		}
+
+	if (($size = curl_getinfo($c, CURLINFO_CONTENT_LENGTH_DOWNLOAD)) > UPLOAD_MAX_SIZE)
+		{
+		Logger::error('File bigger than '.round(UPLOAD_MAX_SIZE/1024/1024)."MB (".round(CURLINFO_CONTENT_LENGTH_DOWNLOAD/1024/1024)."MB)");
+		return false;
+		}
+
+	$content_type = curl_getinfo($c, CURLINFO_CONTENT_TYPE);
+	if (strpos($content_type, ';') !== FALSE) {
+		list($content_type) = explode(';', $content_type);
+	}
+
+	return $content_type;
+	}
+
 function process_url($url, &$content_type)
 	{
 	$url = html_entity_decode($url);

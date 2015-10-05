@@ -28,7 +28,7 @@ class Picture
 		{
 		}
 
-	static function acceptable($data, $content_type)
+	static function acceptable($content_type)
 		{
 		$content_types = array(
 			'image/gif' => 'gif',

@@ -99,69 +99,63 @@ while ($line = fgets($f))
 			continue;
 			}
 
-		if ($data = process_url($url, $content_type))
+		$tribune = new Tribune();
+		if (!$tribune->load_by_name($tribune_name))
 			{
-			$tribune = new Tribune();
-			if (!$tribune->load_by_name($tribune_name))
+			$tribune->name = $tribune_name;
+			$tribune->url = $tribune_url;
+			$tribune->insert();
+			}
+
+		$content_type = get_content_type($url);
+		if (Picture::acceptable($content_type) and $data = process_url($url, $content_type))
+			{
+			$picture = new Picture();
+			$picture->name = $source_url;
+			$picture->title = $post[4];
+			$picture->url = $source_url;
+			$picture->date = $timestamp;
+			$picture->user = $user_name;
+			$picture->tribune_id = $tribune->id;
+			$picture->post_id = $post_id;
+
+			Logger::notice('Post ID is '.$post_id);
+			Logger::notice('Tribune ID is '.$tribune->id);
+
+			if ($picture->write($data))
 				{
-				$tribune->name = $tribune_name;
-				$tribune->url = $tribune_url;
-				$tribune->insert();
-				}
-
-			if (Picture::acceptable($data, $content_type))
-				{
-				$picture = new Picture();
-				$picture->name = $source_url;
-				$picture->title = $post[4];
-				$picture->url = $source_url;
-				$picture->date = $timestamp;
-				$picture->user = $user_name;
-				$picture->tribune_id = $tribune->id;
-				$picture->post_id = $post_id;
-
-				Logger::notice('Post ID is '.$post_id);
-				Logger::notice('Tribune ID is '.$tribune->id);
-
-				if ($picture->write($data))
+				Logger::notice('Picture written');
+				$picture->raw_tags = $picture->find_tags();
+				$picture->init_tags();
+				if ($picture->insert())
 					{
-					Logger::notice('Picture written');
-					$picture->raw_tags = $picture->find_tags();
-					$picture->init_tags();
-					if ($picture->insert())
-						{
-						Logger::notice('Picture saved');
-						}
-					else
-						{
-						Logger::error('Could not save picture');
-						}
-
-					$images_per_user[$user_name] += 1;
+					Logger::notice('Picture saved');
 					}
-				}
-			else if (Link::acceptable($data, $content_type))
-				{
-				$link = new Link();
-				$link->user = $user_name;
-				$link->date = $timestamp;
-				$link->url = $source_url;
-				$link->tribune_id = $tribune->id;
-				$link->post_id = $post_id;
-				$link->context = $post[4];
+				else
+					{
+					Logger::error('Could not save picture');
+					}
 
-				list($content_type) = explode(';', $content_type);
-				$link->type = $content_type;
-
-				$link->generate_thumbnail($data);
-				Logger::notice('Link created');
-				$link->insert();
-				Logger::notice('Link saved');
+				$images_per_user[$user_name] += 1;
 				}
 			}
-		else
+		else if (Link::acceptable($content_type))
 			{
-			Logger::warning("process_url() failed for $url of type $content_type");
+			$link = new Link();
+			$link->user = $user_name;
+			$link->date = $timestamp;
+			$link->url = $source_url;
+			$link->tribune_id = $tribune->id;
+			$link->post_id = $post_id;
+			$link->context = $post[4];
+
+			list($content_type) = explode(';', $content_type);
+			$link->type = $content_type;
+
+			$link->generate_thumbnail();
+			Logger::notice('Link created');
+			$link->insert();
+			Logger::notice('Link saved');
 			}
 		}
 	}
