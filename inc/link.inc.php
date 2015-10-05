@@ -437,7 +437,7 @@ XML;
 
 			if (isset($data['description']))
 				{
-				$this->description = $data['description'];
+				$this->description = mb_substr($data['description'], 0, 2048);
 				}
 
 			if (isset($data['image_url']))
