@@ -50,7 +50,10 @@ class Picture
 	}
 
 	function xml_element() {
-		$message = $this->post_clock()."@".$this->tribune_name." <a href=\"".htmlspecialchars($this->url)."\">[".$this->type."]</a> <i>".htmlspecialchars($this->tags)."</i>";
+		$message = $this->post_clock().
+			"@".$this->tribune_name.
+			" <a href=\"".htmlspecialchars(url(PICTURES_PREFIX.'/'.$this->src, false))."\">[".$this->type."]</a> - ".
+			" <a href=\"".htmlspecialchars($this->url)."\">[url]</a> <i>".htmlspecialchars($this->tags)."</i>";
 		$login = htmlspecialchars($this->user);
 
 		$xml = <<<XML
