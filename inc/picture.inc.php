@@ -74,7 +74,10 @@ XML;
 			$this->post_time(),
 			"",
 			$this->user,
-			$this->post_clock().'@'.$this->tribune_name.' <a href="'.$this->url.'">['.$this->type.']</a> <i>'.$this->tags.'</i>',
+			$this->post_clock().
+				'@'.$this->tribune_name.
+				" <a href=\"".url(PICTURES_PREFIX.'/'.$this->src, false)."\">[".$this->type."]</a> - ".
+				' <a href="'.$this->url.'">[url]</a> <i>'.$this->tags.'</i>',
 		);
 
 		foreach ($array as &$value) {

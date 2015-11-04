@@ -224,7 +224,7 @@ a[data-tags~="nsfw"] img
 	transition: none;
 	}
 
-#content .thumbnail-link:hover *
+#content .thumbnail:hover *
 	{
 	opacity: 1 !important;
 	}
@@ -723,7 +723,7 @@ a.thumbnail-link.link img
 	position: absolute;
 	}
 
-a.thumbnail-link.current *
+.thumbnail.current img, .thumbnail.current video
 	{
 	border: 5px solid white;
 	box-shadow: 0 0 10px 1px white;

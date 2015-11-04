@@ -137,7 +137,7 @@ XML;
 		<div class='picture'>
 			<div class='row'>
 				<div class='video-container displayed-picture'>
-					{$arrow_left}<video class='media' muted autoplay loop src='{$src}' data-picture-id='{$picture->id}'></video>{$arrow_right}
+					{$arrow_left}<video class='media' muted autoplay loop src='{$src}' data-picture-id='{$picture->id}' data-unique-id='{$picture->unique_id}'></video>{$arrow_right}
 				</div>
 			</div>
 			<div class='info'>
@@ -425,7 +425,8 @@ HTML;
 	function foot()
 		{
 		return '
-			<script type="text/javascript" src="sauf.3.js"></script>
+			<script type="text/javascript" src="sauf.4.js"></script>
+			<script type="text/javascript" src="sauf.new.js"></script>
 		</body>
 	</html>';
 		}

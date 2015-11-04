@@ -93,12 +93,32 @@ XML;
 		if ($this->description) {
 			$text[] = $this->description;
 		}
+
+		$message = $this->post_clock().'@'.$this->tribune_name;
+
+		if (file_exists($this->screenshot_path))
+			{
+			$screenshot_png = url(PICTURES_PREFIX.'/'.$this->screenshot_src, false);
+
+			$message .= " <a href=\"".$screenshot_png."\">[png]</a> ";
+
+			$pdf_screenshot_path = str_replace('.png', '.pdf', $this->screenshot_path);
+			if (file_exists($pdf_screenshot_path))
+				{
+				$pdf_src = str_replace('.png', '.pdf', $this->screenshot_src);
+				$screenshot_pdf = url(PICTURES_PREFIX.'/'.$pdf_src, false);
+				$message .= " <a href=\"".$screenshot_pdf."\">[pdf]</a> ";
+				}
+			}
+
+		$message .= ' - <a href="'.$this->url.'">[url]</a> '.join(' - ', $text);
+
 		$array = array(
 			$this->unique_id,
 			$this->post_time(),
 			"",
 			$this->user,
-			$this->post_clock().'@'.$this->tribune_name.' <a href="'.$this->url.'">[url]</a> '.join(' - ', $text),
+			$message,
 		);
 
 		foreach ($array as &$value) {
@@ -451,7 +471,7 @@ XML;
 			{
 			if (isset($data['title']))
 				{
-				$this->title = $data['title'];
+				$this->title = mb_substr($data['title'], 0, 1024);
 				}
 
 			if (isset($data['description']))
