@@ -1,6 +1,0 @@
-[submodule "lib/opengraph"]
-	path = lib/opengraph
-	url = git@github.com:scottmac/opengraph.git
-[submodule "lib/Opengraph"]
-	path = lib/Opengraph
-	url = git@github.com:euskadi31/Opengraph.git

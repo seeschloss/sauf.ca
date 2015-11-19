@@ -409,27 +409,8 @@ XML;
 		return "";
 		}
 
-	function og_tags()
-		{
-		$url = new URL($this->url);
-		$tags = $url->tags();
-		if (count($tags))
-			{
-			return $tags;
-			}
-		else
-			{
-			return false;
-			}
-		}
-
 	function find_tags()
 		{
-		if ($tags = $this->og_tags())
-			{
-			return $tags;
-			}
-
 		if (isset($GLOBALS['config']['autotagging']['imagga-auth']))
 			{
 			return $this->find_tags_imagga();
