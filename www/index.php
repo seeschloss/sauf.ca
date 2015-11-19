@@ -5,7 +5,7 @@ if (strpos($_SERVER['REQUEST_URI'], '/latest.json') !== 0 and !empty($_GET['sear
 	header('Location: /?' . urlencode($_GET['search']));
 }
 
-require 'inc/common.inc.php';
+require '../inc/common.inc.php';
 
 $site = new Site($GLOBALS['config']['title']);
 

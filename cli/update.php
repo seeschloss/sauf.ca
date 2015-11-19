@@ -1,5 +1,5 @@
 <?php
-require 'inc/common.inc.php';
+require '../inc/common.inc.php';
 
 if (!$argv)
 	{
