@@ -268,6 +268,8 @@ HTML;
 			';
 		$result = $db->query($query);
 
+		$thumbnails = array();
+
 		if ($result) while ($row = $result->fetch_assoc())
 			{
 			$picture = new Picture();
