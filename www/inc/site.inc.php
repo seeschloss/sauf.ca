@@ -366,7 +366,7 @@ HTML;
 					$prefetch_first .= '<link rel="prefetch" href="'.$thumbnail->animated_src().'" />';
 					$prefetch_last  .= '<link rel="prefetch" href="'.$src.'" />';
 					}
-				else if (strpos('image/', $thumbnail->type) === 0)
+				else if ($thumbnail->type and strpos('image/', $thumbnail->type) === 0)
 					{
 					$src = url(PICTURES_PREFIX.'/'.$thumbnail->src, true);
 					$prefetch_later .= '<link rel="prefetch" href="'.$src.'" />';
