@@ -1,5 +1,3 @@
-pictures/*
-old
-.svn
+www/pictures/*
 cfg/config.inc.php
 *.swp
