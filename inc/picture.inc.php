@@ -435,8 +435,10 @@ XML;
 
 	function init_tags()
 		{
+		$tags = array();
+
 		$data = json_decode($this->raw_tags, true);
-		if (is_array($data))
+		if (is_array($data) and isset($data['results'][0]['tags']))
 			{
 			foreach ($data['results'][0]['tags'] as $tag)
 				{
