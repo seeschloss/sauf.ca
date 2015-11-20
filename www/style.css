@@ -664,6 +664,11 @@ span.thumbnail
 	position: relative;
 	}
 
+span.thumbnail a
+	{
+	display: inline-block;
+	}
+
 a.thumbnail-link > img, a.thumbnail-link.link > span.link-text, a.thumbnail-link > video
 	{
 	margin: 3px;
