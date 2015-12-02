@@ -704,37 +704,6 @@ var performSearch = function(term) {
 					document.querySelector('#thumbnails').innerHTML = '';
 					data.sort(function(a, b) { return +a.date > +b.date ? -1 : 1 });
 					for (var i in data) {
-						//appendNewThumbnail(data[i]);
-						sauf.appendThumbnail(data[i]);
-					}
-				}
-			}
-		}
-	};
-	req.send(null);
-};
-
-var resetToLatest = function() {
-	var req = new XMLHttpRequest();
-
-	var animatedParam = currentAnimated ? '1' : '0';
-	var picturesParam = currentPictures ? '1' : '0';
-	var linksParam = currentLinks ? '1' : '0';
-
-	var uri = 'latest.json?since=0&animated=' + animatedParam + '&pictures=' + picturesParam + '&links=' + linksParam;
-	if (currentTerm != "") {
-		uri += "&search=" + encodeURIComponent(currentTerm);
-	}
-	req.open('GET', uri, true);
-	req.onreadystatechange = function(e) {
-		if (req.readyState == 4) {
-			if (req.status == 200 || req.status == 0) {
-				var data = null;
-				if (data = JSON.parse(req.responseText)) {
-					data.sort(function(a, b) { return +a.date > +b.date ? -1 : 1 });
-					document.querySelector('#thumbnails').innerHTML = '';
-					for (var i in data) {
-						//appendNewThumbnail(data[i]);
 						sauf.appendThumbnail(data[i]);
 					}
 				}
@@ -751,31 +720,23 @@ var appendOldThumbnails = function() {
 		oldest = last.dataset.date;
 	}
 
-	var animatedParam = currentAnimated ? '1' : '0';
-	var picturesParam = currentPictures ? '1' : '0';
-	var linksParam = currentLinks ? '1' : '0';
-
-	var url = 'history.json?count=250&until=' + oldest + '&animated=' + animatedParam + '&pictures=' + picturesParam + '&links=' + linksParam;
-	if (currentTerm != "") {
-		url += "&search=" + encodeURIComponent(currentTerm);
-	}
-
-	var req = new XMLHttpRequest();
-	req.open('GET', url, true);
-	req.onreadystatechange = function(e) {
-		if (req.readyState == 4) {
-			if (req.status == 200 || req.status == 0) {
-				var data = null;
-				if (data = JSON.parse(req.responseText)) {
-					for (var i in data) {
-						//appendNewThumbnail(data[i]);
-						sauf.appendThumbnail(data[i]);
-					}
-				}
+	sauf.retrieveThumbnails({
+		until: oldest,
+		count: 250,
+		animated: currentAnimated ? '1' : '0',
+		pictures: currentPictures ? '1' : '0',
+		links: currentLinks ? '1' : '0',
+		search: currentTerm != "" ? currentTerm : undefined,
+		animated: currentAnimated ? 1 : undefined
+	}, function(responseText) {
+		var data;
+		if (data = JSON.parse(responseText)) {
+			data.sort(function(a, b) { return +a.id > +b.id ? 1 : -1 });
+			for (var i in data) {
+				sauf.appendThumbnail(data[i]);
 			}
 		}
-	};
-	req.send(null);
+	});
 };
 
 var prependNewThumbnails = function() {
@@ -784,204 +745,22 @@ var prependNewThumbnails = function() {
 		newest = +document.querySelectorAll('#thumbnails a.picture').item(0).dataset.date;
 	}
 
-	var animatedParam = currentAnimated ? '1' : '0';
-	var picturesParam = currentPictures ? '1' : '0';
-	var linksParam = currentLinks ? '1' : '0';
-
-	var url = 'latest.json?since=' + newest + '&search=' + encodeURIComponent(term) + '&animated=' + animatedParam + '&pictures=' + picturesParam + '&links=' + linksParam;
-	if (currentTerm != "") {
-		url += "&search=" + encodeURIComponent(currentTerm);
-	}
-	if (currentAnimated) {
-		url += '&animated=1';
-	}
-
-	var req = new XMLHttpRequest();
-	req.open('GET', url, true);
-	req.onreadystatechange = function(e) {
-		if (req.readyState == 4) {
-			if (req.status == 200 || req.status == 0) {
-				var data = null;
-				if (data = JSON.parse(req.responseText)) {
-					data.sort(function(a, b) { return +a.id > +b.id ? 1 : -1 });
-					for (var i in data) {
-						prependNewThumbnail(data[i]);
-					}
-				}
+	sauf.retrieveThumbnails({
+		since: newest,
+		animated: currentAnimated ? '1' : '0',
+		pictures: currentPictures ? '1' : '0',
+		links: currentLinks ? '1' : '0',
+		search: currentTerm != "" ? currentTerm : undefined,
+		animated: currentAnimated ? 1 : undefined
+	}, function(responseText) {
+		var data;
+		if (data = JSON.parse(responseText)) {
+			data.sort(function(a, b) { return +a.id > +b.id ? 1 : -1 });
+			for (var i in data) {
+				sauf.prependThumbnail(data[i]);
 			}
 		}
-	};
-	req.send(null);
-};
-
-var appendNewThumbnail = function(data) {
-	if (document.querySelector('#thumbnails a[data-id="' + data.id + '"][data-type="' + data.type + '"]')) {
-		return false;
-	}
-
-	var category = data['type'].split(/\//)[0];
-	switch (category) {
-		case 'image':
-		case 'video':
-			var element = createNewPicture(data);
-			break;
-		default:
-			var element = createNewLink(data);
-			break;
-	}
-
-	var thumbnails = document.querySelector('#thumbnails');
-	thumbnails.appendChild(element);
-
-	sauf.registerThumbnail(element);
-};
-
-var prependNewThumbnail = function(data) {
-	if (document.querySelector('#thumbnails a[data-id="' + data.id + '"][data-type="' + data.type + '"]')) {
-		return false;
-	}
-
-	var category = data['type'].split(/\//)[0];
-	switch (category) {
-		case 'image':
-		case 'video':
-			var element = createNewPicture(data);
-			break;
-		default:
-			var element = createNewLink(data);
-			break;
-	}
-
-	var thumbnails = document.querySelector('#thumbnails');
-	thumbnails.insertBefore(element, thumbnails.firstChild);
-
-	sauf.registerThumbnail(element);
-};
-
-var createNewLink = function(data) {
-	var outer_span = document.createElement('span');
-	outer_span.className = 'thumbnail';
-
-	var link = document.createElement('a');
-	link.id = 'thumbnail-' + data.id;
-	link.href = data.url;
-	link.target = '_blank';
-	link.className = 'thumbnail-link link';
-
-	// what a mess
-	link.dataset.id = data['id'];
-	link.dataset.url = data['url'];
-	link.dataset.title = data['title'];
-	link.dataset.description = data['description'];
-	link.dataset.target = data['target'];
-	link.dataset.userName = data['user'];
-	link.dataset.tags = data['tags'].join(', ');
-	link.dataset.date = data['date'];
-	link.dataset.tribuneName = data['tribune-name'];
-	link.dataset.tribuneUrl = data['tribune-url'];
-	link.dataset.postId = data['post-id'];
-	link.dataset.thumbnailSrc = data['thumbnail-src'];
-	link.dataset.screenshotPng = data['screenshot-png'];
-	link.dataset.screenshotPdf = data['screenshot-pdf'];
-	link.dataset.context = data['context'];
-	link.dataset.bloubs = data['bloubs'];
-	link.dataset.type = data['type'];
-
-	if (link.dataset.thumbnailSrc) {
-		var img = document.createElement('img');
-		img.src = link.dataset.thumbnailSrc;
-		img.alt = '';
-		img.className = 'link-preview';
-		link.appendChild(img);
-	}
-
-	var text_span = document.createElement('span');
-	text_span.className = 'link-text';
-	text_span.title = '';
-	if (link.dataset.title) {
-		var span = document.createElement('span');
-		span.className = 'link-title';
-		span.innerHTML = link.dataset.title;
-		text_span.title += link.dataset.title;
-		text_span.appendChild(span);
-	}
-
-	if (link.dataset.description) {
-		var span = document.createElement('span');
-		span.className = 'link-description';
-		span.innerHTML = link.dataset.description;
-		text_span.title += link.dataset.description;
-		text_span.appendChild(span);
-	}
-
-	link.appendChild(text_span);
-	outer_span.appendChild(link);
-
-	if (link.dataset.screenshotPng || link.dataset.screenshotPdf) {
-		var extra_span = document.createElement('span');
-		extra_span.className = 'link-extra';
-
-		if (link.dataset.screenshotPng) {
-			var a = document.createElement('a');
-			a.target = '_blank';
-			a.className = 'link-png';
-			a.href = link.dataset.screenshotPng;
-			a.innerHTML = 'PNG';
-
-			extra_span.appendChild(a);
-		}
-
-		if (link.dataset.screenshotPdf) {
-			var a = document.createElement('a');
-			a.target = '_blank';
-			a.className = 'link-pdf';
-			a.href = link.dataset.screenshotPdf;
-			a.innerHTML = 'PDF';
-
-			extra_span.appendChild(a);
-		}
-
-		outer_span.appendChild(extra_span);
-	}
-
-	return outer_span;
-};
-
-var createNewPicture = function(data) {
-	var span = document.createElement('span');
-	span.className = 'thumbnail';
-
-	var link = document.createElement('a');
-	link.id = 'thumbnail-' + data.id;
-	link.href = '+' + data.id;
-	link.className = 'thumbnail-link';
-
-	// what a mess
-	link.dataset.url = data['url'];
-	link.dataset.src = data['src'];
-	link.dataset.thumbnailSrc = data['thumbnail-src'];
-	link.dataset.animated = data['animated'];
-	link.dataset.userName = data['user'];
-	link.dataset.title = data['title'];
-	link.dataset.tribuneName = data['tribune-name'];
-	link.dataset.tribuneUrl = data['tribune-url'];
-	link.dataset.postId = data['post-id'];
-	link.dataset.date = data['date'];
-	link.dataset.id = data['id'];
-	link.dataset.tags = data['tags'].join(', ');
-	link.dataset.md5 = data['md5'];
-	link.dataset.type = data['type'];
-
-	var img = document.createElement('img');
-	img.height = '100';
-	img.width = '100';
-	img.src = link.dataset.thumbnailSrc;
-	img.alt = '';
-
-	link.appendChild(img);
-	span.appendChild(link);
-
-	return span;
+	});
 };
 
 document.querySelector('body').onkeydown = function(e) {

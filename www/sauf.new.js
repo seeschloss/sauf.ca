@@ -8,7 +8,65 @@ var Sauf = function(doc) {
 	this.initThumbnails();
 };
 
+Sauf.prototype.retrieveThumbnails = function(params, callback) {
+	var endpoint = ('since' in params ) ? 'latest.json' : 'history.json';
+
+	var default_params = {
+		animated: 1,
+		pictures: 1,
+		links: 1
+	};
+
+	for (var param in params) {
+		if (params.hasOwnProperty(param)) {
+			default_params[param] = params[param];
+		}
+	}
+
+	var params_array = [];
+
+	for (var param in default_params) {
+		if (default_params.hasOwnProperty(param) && default_params[param] !== undefined) {
+			params_array.push(param + '=' + encodeURIComponent(default_params[param]));
+		}
+	}
+
+	var url = endpoint + '?' + params_array.join('&');
+
+	var req = new XMLHttpRequest();
+	req.open('GET', url, true);
+
+	if (callback) {
+		req.onreadystatechange = function(e) {
+			if (req.readyState == 4) {
+				if (req.status == 200 || req.status == 0) {
+					callback(req.responseText);
+				}
+			}
+		};
+	}
+
+	req.send(null);
+};
+
+Sauf.prototype.prependThumbnail = function(data) {
+	if (this.findThumbnailById(data['unique-id'])) {
+		return false;
+	}
+
+	var thumbnail = Thumbnail.create(this, data);
+
+	var thumbnails_element = document.querySelector('#thumbnails');
+	thumbnails_element.insertBefore(thumbnail.element, thumbnails_element.firstChild);
+
+	this.registerThumbnail(thumbnail);
+};
+
 Sauf.prototype.appendThumbnail = function(data) {
+	if (this.findThumbnailById(data['unique-id'])) {
+		return false;
+	}
+
 	var thumbnail = Thumbnail.create(this, data);
 
 	var thumbnails_element = document.querySelector('#thumbnails');
@@ -45,6 +103,16 @@ Sauf.prototype.firstThumbnail = function() {
 Sauf.prototype.lastThumbnail = function() {
 	var elements = this.document.querySelectorAll('span.thumbnail');
 	return this.findThumbnail(elements.item(elements.length - 1));
+};
+
+Sauf.prototype.findThumbnailById = function(unique_id) {
+	var element = document.querySelector('#thumbnails a[data-unique-id="' + unique_id + '"]');
+
+	if (element) {
+		return this.findThumbnail(element.parentElement);
+	}
+
+	return null;
 };
 
 Sauf.prototype.findThumbnail = function(element) {
@@ -95,10 +163,11 @@ Status.prototype.show = function(media) {
 
 	var category = thumbnail.dataset.type.split(/\//)[0];
 
-	var date = document.createElement('span');
-	date.className = 'date';
-	date.innerHTML = formatDate(thumbnail.dataset.date);
-	this.element.appendChild(date);
+	this.element.appendChild(
+		new HTML('span')
+			.attributes({className: 'date', innerHTML: formatDate(thumbnail.dataset.date)})
+			.element()
+	);
 
 	if (thumbnail.dataset.url) {
 		var link = document.createElement('a');
@@ -304,7 +373,6 @@ Viewer.prototype.enableZoom = function() {
 	this.zoomOverlay.id = 'zoom-overlay';
 
 	this.zoomOverlay.onclick = function() {
-		console.log("overlay");
 		document.querySelector('body').className = '';
 		zoomOverlay.parentElement.removeChild(zoomOverlay);
 		this.close();
@@ -356,9 +424,6 @@ Viewer.prototype.handleEvent = function(e) {
 Viewer.prototype.handlePreviewElementEvent = function(e) {
 	switch (e.type) {
 		case 'click':
-			console.log("click");
-			console.log(this);
-			console.log(this.previewElement);
 			e.preventDefault();
 			e.stopPropagation();
 
@@ -378,9 +443,6 @@ Viewer.prototype.handlePreviewElementEvent = function(e) {
 			} else {
 				this.media.zoomable = true;
 			}
-			console.log(this.media);
-			console.log(percent);
-			console.log(this.media.isZoomable());
 
 			var label = document.createElement('span');
 			label.className = 'image-label';
@@ -493,6 +555,9 @@ Viewer.prototype.show = function(media) {
 };
 
 Viewer.prototype.close = function() {
+	currentImage = false;
+	currentAnimated = false;
+
 	if (this.element && this.element.parentElement) {
 		this.element.parentElement.removeChild(this.element);
 		updateHistory();
@@ -585,6 +650,7 @@ Thumbnail.createLinkElement = function(data) {
 	link.dataset.context = data['context'];
 	link.dataset.bloubs = data['bloubs'];
 	link.dataset.type = data['type'];
+	link.dataset.media = data['media'];
 
 	if (link.dataset.thumbnailSrc) {
 		var img = document.createElement('img');
@@ -670,6 +736,7 @@ Thumbnail.createPictureElement = function(data) {
 	link.dataset.tags = data['tags'].join(', ');
 	link.dataset.md5 = data['md5'];
 	link.dataset.type = data['type'];
+	link.dataset.media = data['media'];
 
 	var img = document.createElement('img');
 	img.height = '100';
@@ -755,7 +822,9 @@ Link.prototype.onMouseover = function(e) {
 
 Link.prototype.onMouseout = function(e) {
 	e.preventDefault(); e.stopPropagation();
-	this.site.status.reset();
+	if (!this.site.viewer.opened) {
+		this.site.status.reset();
+	}
 };
 
 Link.prototype.isVideo = function() {
@@ -787,7 +856,9 @@ Image.prototype.onMouseover = function(e) {
 
 Image.prototype.onMouseout = function(e) {
 	e.preventDefault(); e.stopPropagation();
-	this.site.status.reset();
+	if (!this.site.viewer.opened) {
+		this.site.status.reset();
+	}
 };
 
 Image.prototype.onClick = function(e) {
@@ -859,7 +930,9 @@ Animated.prototype.onMouseover = function(e) {
 Animated.prototype.onMouseout = function(e) {
 	e.preventDefault(); e.stopPropagation();
 	this.stopAnimation();
-	this.site.status.reset();
+	if (!this.site.viewer.opened) {
+		this.site.status.reset();
+	}
 };
 
 Animated.prototype.onClick = function(e) {
@@ -898,6 +971,24 @@ Animated.prototype.previewElement = function() {
 	}
 
 	return element;
+};
+
+var HTML = function(type) {
+	this._element = document.createElement(type);
+};
+
+HTML.prototype.attributes = function(attr) {
+	for (var i in attr) {
+		if (attr.hasOwnProperty(i)) {
+			this._element[i] = attr[i];
+		}
+	}
+
+	return this;
+};
+
+HTML.prototype.element = function() {
+	return this._element;
 };
 
 var sauf = new Sauf(document);

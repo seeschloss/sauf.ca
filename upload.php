@@ -30,7 +30,7 @@ while ($line = fgets($f))
 		$source_url = $url;
 
 		trigger_error('URL is '.$url);
-		if (preg_match('/sauf.ca/', $url))
+		if (preg_match('/sauf\.ca/', $url))
 			{
 			continue;
 			}
