@@ -156,7 +156,7 @@ HTML;
 			<div class='row'>
 				<div class='image-container displayed-picture zoomable'>
 					{$arrow_left}
-					<img class='media' src='{$src}' data-picture-id='{$picture->id}' />
+					<img class='media' src='{$src}' data-picture-id='{$picture->id}' data-unique-id='{$picture->unique_id}' />
 					{$arrow_right}
 					</div>
 			</div>

@@ -93,10 +93,12 @@ XML;
 		$data = array();
 		$db = new DB();
 
-		$query = 'SELECT p.*, t.name as tribune_name, t.url as tribune_url
+		$query = 'SELECT p.*, u.id as unique_id, t.name as tribune_name, t.url as tribune_url
 			FROM pictures p
 			LEFT JOIN tribunes t
 			  ON p.tribune_id = t.id
+			LEFT JOIN unique_ids u
+			  ON p.id = u.picture_id
 			WHERE p.post_id = '.(int)$post_id
 			;
 		$result = $db->query($query);
@@ -119,10 +121,12 @@ XML;
 		$data = array();
 		$db = new DB();
 
-		$query = 'SELECT p.*, t.name as tribune_name, t.url as tribune_url
+		$query = 'SELECT p.*, u.id as unique_id, t.name as tribune_name, t.url as tribune_url
 			FROM pictures p
 			LEFT JOIN tribunes t
 			  ON p.tribune_id = t.id
+			LEFT JOIN unique_ids u
+			  ON p.id = u.picture_id
 			WHERE p.id = '.(int)$id
 			;
 		$result = $db->query($query);

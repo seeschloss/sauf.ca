@@ -100,93 +100,6 @@ var currentAnimated = true;
 var currentPictures = true;
 var currentLinks    = true;
 
-var fullImageHandlers = function(img) {
-	img.onload = function() {
-		var percent = this.height/this.naturalHeight * 100;
-
-		if (percent > 99) {
-			this.className = this.className.replace(/zoomable/, '');
-		}
-
-		var label = document.createElement('span');
-		label.className = 'image-label';
-
-		var text = document.createElement('span');
-		text.innerHTML = this.naturalWidth + 'x' + this.naturalHeight + ' (' + Math.round(percent) + '%)';
-
-		label.appendChild(text);
-
-		this.parentElement.parentElement.parentElement.appendChild(label);
-
-		showImageTags(img.dataset.pictureId);
-	};
-
-	img.onclick = function(e) {
-		e.preventDefault();
-		e.stopPropagation();
-
-		if (img.parentElement.id == 'zoom-overlay') {
-			sauf.viewer.toggleZoom();
-		} else if (!this.parentElement.className.match(/zoomable/)) {
-			closeViewer();
-			updateHistory();
-		} else {
-			sauf.viewer.toggleZoom();
-		}
-	};
-};
-
-var previousImage = function(image) {
-	if (!image) {
-		return null;
-	}
-
-	var previous = image.previousSibling;
-	while (previous && previous.target == '_blank') {
-		previous = previous.previousSibling;
-	}
-	return previous;
-};
-
-var nextImage = function(image) {
-	if (!image) {
-		return null;
-	}
-
-	var next = image.nextSibling;
-	while (next && next.target == '_blank') {
-		next = next.nextSibling;
-	}
-	return next;
-};
-
-var attachProgressUpdateHandler = function(video, progress) {
-	video.addEventListener('canplay', function() {
-		progress.style.maxWidth = video.clientWidth + 'px';
-	});
-
-	window.onresize = function() {
-		progress.style.maxWidth = video.clientWidth + 'px';
-	};
-
-	video.addEventListener('timeupdate', function() {
-		var percent = (100 / video.duration) * video.currentTime;
-		progress.value = percent;
-	}, false);
-
-	progress.addEventListener('click', function(e) {
-		e.preventDefault();
-		e.stopPropagation();
-
-		var start = this.getClientRects()[0].left;
-		var stop = this.getClientRects()[0].right;
-
-		var position = (e.clientX - start) / (stop - start);
-
-		video.currentTime = Math.round(video.duration * position * 100) / 100;
-	});
-};
-
 var toggleComments = function(image) {
 	if (image.dataset.tribuneName != 'dlfp') {
 		return;
@@ -490,174 +403,10 @@ var viewerScrollHandler = function(e) {
 	}
 };
 
-var closeViewer = function() {
-	currentImage = undefined;
-
-	var viewer = document.querySelector('#viewer');
-	if (viewer) {
-		viewer.parentElement.removeChild(viewer);
-	}
-
-	var zoom = document.querySelector('#zoom-overlay');
-	if (zoom) {
-		zoom.parentElement.removeChild(zoom);
-		document.querySelector('body').className = '';
-	}
-};
-
-var showThumbnailStatus = function(thumbnail) {
-	var category = thumbnail.dataset.type.split(/\//)[0];
-
-	var status = document.querySelector('#status');
-	status.innerHTML = '';
-
-	var date = document.createElement('span');
-	date.className = 'date';
-	date.innerHTML = formatDate(thumbnail.dataset.date);
-	status.appendChild(date);
-
-	if (thumbnail.dataset.url) {
-		var link = document.createElement('a');
-		link.className = 'link';
-		link.href = thumbnail.dataset.url;
-		link.innerHTML = link.href;
-		link.innerHTML = link.innerHTML.replace(/https?:\/\//, '');
-		if (link.innerHTML.length > 40) {
-			link.innerHTML = link.innerHTML.substr(0, 40) + '...';
-		}
-		status.appendChild(link);
-	}
-
-	var bloubs = document.createElement('a');
-	bloubs.className = 'doublons hidden';
-	bloubs.href = '=' + thumbnail.dataset.md5;
-	bloubs.innerHTML = 'Doublons';
-	status.appendChild(bloubs);
-
-	if (thumbnail.dataset.bloubs > 0) {
-		var nbloubs = thumbnail.dataset.bloubs;
-		if (nbloubs > 1) {
-			nbloubs -= 1;
-			bloubs.className = 'doublons';
-			if (nbloubs > 1) {
-				bloubs.innerHTML = nbloubs + ' doublons';
-			} else {
-				bloubs.innerHTML = nbloubs + ' doublon';
-			}
-		}
-	} else {
-		var req = new XMLHttpRequest();
-		switch (category) {
-			case 'image':
-			case 'video':
-				var url = 'bloubs.json?picture=' + thumbnail.dataset.id;
-				break;
-			default:
-				var url = 'bloubs.json?link=' + thumbnail.dataset.id;
-				break;
-		}
-		req.open('GET', url, true);
-		req.onreadystatechange = function(e) {
-			if (req.readyState == 4) {
-				if (req.status == 200 || req.status == 0) {
-					var data = null;
-					if (data = JSON.parse(req.responseText)) {
-						var nbloubs = data[thumbnail.dataset.id];
-						thumbnail.dataset.bloubs = nbloubs;
-						if (nbloubs > 1) {
-							nbloubs -= 1;
-							bloubs.className = 'doublons';
-							if (nbloubs > 1) {
-								bloubs.innerHTML = nbloubs + ' doublons';
-							} else {
-								bloubs.innerHTML = nbloubs + ' doublon';
-							}
-						}
-					}
-				}
-			}
-		};
-		req.send(null);
-	}
-
-	if (category == 'image' || category == 'video') {
-		var google = document.createElement('a');
-		google.className = 'google';
-		google.href = 'https://www.google.com/searchbyimage?hl=en&safe=off&site=search&image_url=' + thumbnail.dataset.src;
-		google.innerHTML = 'Google';
-		status.appendChild(google);
-	}
-
-	if (thumbnail.dataset.tribuneUrl && thumbnail.dataset.tribuneName) {
-		var tribune = document.createElement('a');
-		tribune.className = 'tribune';
-		tribune.href = thumbnail.dataset.tribuneUrl;
-		tribune.innerHTML = thumbnail.dataset.tribuneName;
-		status.appendChild(tribune);
-	}
-
-	if (thumbnail.dataset.userName) {
-		var user = document.createElement('a');
-		user.className = 'user';
-		user.href = thumbnail.dataset.tribuneUrl;
-		if (thumbnail.dataset.tribuneName == "dlfp") {
-			// bombefourchette.com history here
-			var date = new Date(+thumbnail.dataset.date * 1000);
-
-			var day = date.getDate();
-			var month = date.getMonth() + 1;
-			var year = date.getFullYear();
-			if (day   < 10) { day   = "0" + day;    }
-			if (month < 10) { month = "0" + month;  }
-			user.href = "http://bombefourchette.com/t/dlfp/" + year + "-" + month + "-" + day;
-			if (+thumbnail.dataset.postId > 0) {
-				user.href += "#" + thumbnail.dataset.postId;
-			}
-		} else if (thumbnail.dataset.tribuneName == "euromussels") {
-			// bombefourchette.com history here
-			var date = new Date(+thumbnail.dataset.date * 1000);
-
-			var day = date.getDate();
-			var month = date.getMonth() + 1;
-			var year = date.getFullYear();
-			if (day   < 10) { day   = "0" + day;    }
-			if (month < 10) { month = "0" + month;  }
-			user.href = "http://bombefourchette.com/t/euromussels/" + year + "-" + month + "-" + day;
-			if (+thumbnail.dataset.postId > 0) {
-				user.href += "#" + thumbnail.dataset.postId;
-			}
-		}
-		user.innerHTML = thumbnail.dataset.userName;
-		status.appendChild(user);
-	}
-
-	var title = document.createElement('span');
-	title.className = 'title';
-	if (category == 'image' || category == 'video') {
-		title.innerHTML = thumbnail.dataset.title;
-	} else {
-		title.innerHTML = thumbnail.dataset.context;
-	}
-	status.appendChild(title);
-
-	if (currentImage && thumbnail.dataset.tribuneName == "dlfp") {
-		var upArrow = document.createElement('span');
-		upArrow.id = 'show-comments';
-		upArrow.className = 'up';
-		upArrow.innerHTML = '▲';
-		status.appendChild(upArrow);
-
-		upArrow.onclick = function(e) {
-			toggleComments(currentImage);
-		};
-	}
-};
-
 var updateHistory = function() {
 	if (history && history.pushState) {
 		var title = "Sauf.ça";
 		var data = {
-			upload: false
 		};
 		var url = "/";
 
@@ -670,11 +419,6 @@ var updateHistory = function() {
 		if (currentImage) {
 			data.image = currentImage.dataset.id;
 			url = "/+" + currentImage.dataset.id;
-		}
-
-		if (document.querySelector('#upload-form')) {
-			data.upload = true;
-			url = '/upload';
 		}
 
 		if (JSON.stringify(history.state) != JSON.stringify(data)) {
@@ -711,56 +455,6 @@ var performSearch = function(term) {
 		}
 	};
 	req.send(null);
-};
-
-var appendOldThumbnails = function() {
-	var oldest = 0;
-	var last = sauf.lastThumbnail();
-	if (last) {
-		oldest = last.dataset.date;
-	}
-
-	sauf.retrieveThumbnails({
-		until: oldest,
-		count: 250,
-		animated: currentAnimated ? '1' : '0',
-		pictures: currentPictures ? '1' : '0',
-		links: currentLinks ? '1' : '0',
-		search: currentTerm != "" ? currentTerm : undefined,
-		animated: currentAnimated ? 1 : undefined
-	}, function(responseText) {
-		var data;
-		if (data = JSON.parse(responseText)) {
-			data.sort(function(a, b) { return +a.id > +b.id ? 1 : -1 });
-			for (var i in data) {
-				sauf.appendThumbnail(data[i]);
-			}
-		}
-	});
-};
-
-var prependNewThumbnails = function() {
-	var newest = 0;
-	if (document.querySelectorAll('#thumbnails a.picture').length) {
-		newest = +document.querySelectorAll('#thumbnails a.picture').item(0).dataset.date;
-	}
-
-	sauf.retrieveThumbnails({
-		since: newest,
-		animated: currentAnimated ? '1' : '0',
-		pictures: currentPictures ? '1' : '0',
-		links: currentLinks ? '1' : '0',
-		search: currentTerm != "" ? currentTerm : undefined,
-		animated: currentAnimated ? 1 : undefined
-	}, function(responseText) {
-		var data;
-		if (data = JSON.parse(responseText)) {
-			data.sort(function(a, b) { return +a.id > +b.id ? 1 : -1 });
-			for (var i in data) {
-				sauf.prependThumbnail(data[i]);
-			}
-		}
-	});
 };
 
 document.querySelector('body').onkeydown = function(e) {
@@ -844,7 +538,7 @@ document.querySelector('body').onkeydown = function(e) {
 			}
 			break;
 		case 82: // r
-			prependNewThumbnails();
+			sauf.prependNewThumbnails();
 			break;
 		case 84: // t
 			if (currentImage) {
@@ -874,212 +568,11 @@ var formatDate = function(timestamp) {
 	return day + "/" + month + "/" + year + " " + hour + ":" + minute;
 };
 
-var handleUpload = function(form) {
-	var file = form.filedata.files[0];
-	if (file) {
-		postFile(file, form.comment.value);
-	} else {
-		postUrl(form.url.value, form.comment.value);
-	}
-};
-
-var setupUpload = function() {
-	var bloubs = document.querySelector('#sitebar .header');
-	
-	if (document.querySelector('#upload-form')) {
-		var viewer = document.querySelector('#viewer');
-		var form = document.querySelector('#upload-form');
-
-		viewer.onclick = function() {
-			closeViewer();
-			updateHistory();
-		};
-
-		form.onclick = function(e) {
-			e.stopPropagation();
-		};
-
-		form.onsubmit = function(e) {
-			e.preventDefault();
-			handleUpload(this);
-		};
-	}
-
-	checkCanPostComments('dlfp', function(canPostComments) {
-		if (!canPostComments) {
-			return;
-		}
-
-		var upload = document.createElement('a');
-		upload.id = 'upload-button';
-		upload.href = 'upload';
-		upload.innerHTML = '⤒';
-		upload.title = 'Poster une nouvelle image sur DLFP';
-
-		bloubs.appendChild(upload);
-
-		upload.onclick = function(e) {
-			e.preventDefault();
-			showUpload();
-			updateHistory();
-		};
-	});
-};
-
-var showUpload = function() {
-	var viewer = document.createElement('div');
-	viewer.id = 'viewer';
-
-	var picture = document.createElement('div');
-	picture.className = 'picture';
-
-	var form = document.createElement('form');
-	form.id = 'upload-form';
-	form.action = 'upload';
-	form.method = 'post';
-	form.enctype = 'multipart/form-data';
-
-	var input_file = document.createElement('input');
-	input_file.type = 'file';
-	input_file.name = 'filedata';
-	input_file.id = 'upload-file';
-
-	var input_url = document.createElement('input');
-	input_url.type = 'text';
-	input_url.name = 'url';
-	input_url.id = 'upload-url';
-	input_url.placeholder = 'URL';
-
-	var upload_span = document.createElement('span');
-	upload_span.id = 'upload-span';
-
-	var input_comment = document.createElement('input');
-	input_comment.type = 'text';
-	input_comment.name = 'comment';
-	input_comment.id = 'upload-comment';
-	input_comment.placeholder = 'commentaire';
-
-	var input_post = document.createElement('input');
-	input_post.type = 'submit';
-	input_post.name = 'post';
-	input_post.id = 'upload-post';
-	input_post.value = '⏎';
-
-	var upload_explanation = document.createElement('p');
-	upload_explanation.id = 'upload-explanation';
-	upload_explanation.innerHTML = "Vous pouvez poster un lien vers une image ou une vidéo, ou bien uploader un fichier qui sera hébergé sur <a href='http://pomf.se'>pomf.se</a>.";
-
-	upload_span.appendChild(input_file);
-	upload_span.appendChild(input_url);
-	form.appendChild(upload_explanation);
-	form.appendChild(upload_span);
-	form.appendChild(input_comment);
-	form.appendChild(input_post);
-
-	form.onclick = function(e) {
-		e.stopPropagation();
-	};
-
-	form.onsubmit = function(e) {
-		e.preventDefault();
-		handleUpload(this);
-	};
-
-	viewer.appendChild(picture);
-	picture.appendChild(form);
-
-	viewer.onclick = function() {
-		closeViewer();
-		updateHistory();
-	};
-
-	document.querySelector('body').appendChild(viewer);
-};
-
-var postFile = function(file, comment) {
-	var url = 'oauth/dlfp/upload.json';
-	var req = new XMLHttpRequest();
-
-	var fd = new FormData();
-	fd.append('comment', comment);
-	fd.append('filedata', file);
-
-	req.open('POST', url, true);
-	req.onreadystatechange = function(e) {
-		if (req.readyState == 4) {
-			if (req.status == 200 || req.status == 0) {
-				var data = null;
-				if (data = JSON.parse(req.responseText)) {
-					if (!data.error) {
-						closeViewer();
-					}
-				}
-			}
-		}
-	};
-	req.send(fd);
-};
-
-var postUrl = function(image, comment) {
-	var url = 'oauth/dlfp/upload.json';
-	var req = new XMLHttpRequest();
-	var params = 'file=' + encodeURI(image) + '&comment=' + encodeURI(comment);
-	req.open('POST', url, true);
-	req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-	req.onreadystatechange = function(e) {
-		if (req.readyState == 4) {
-			if (req.status == 200 || req.status == 0) {
-				var data = null;
-				if (data = JSON.parse(req.responseText)) {
-					if (!data.error) {
-						closeViewer();
-					}
-				}
-			}
-		}
-	};
-	req.send(params);
-};
-
-var images = document.querySelectorAll('span.thumbnail');
-
-var picture = document.querySelector('#viewer .displayed-picture .media');
-if (picture) {
-	var picture_id = picture.dataset.pictureId;
-	var image = document.querySelector('#thumbnails a[data-id="' + picture_id + '"]');
-	fullImageHandlers(picture);
-	document.querySelector('#viewer').onclick = function() {
-		closeViewer();
-		updateHistory();
-	};
-
-	var thumbnail = sauf.findThumbnail(image);
-	if (thumbnail && thumbnail.media) {
-		sauf.setCurrentMedia(thumbnail.media);
-	}
-
-	setTimeout(function() {
-		addWheelListener(document.querySelector('#viewer'), viewerScrollHandler);
-	}, 250);
-
-	if (picture.tagName == 'VIDEO') {
-		var progress = document.createElement('progress');
-
-		progress.value = 0;
-		progress.max = 100;
-		picture.parentElement.appendChild(progress);
-
-		attachProgressUpdateHandler(picture, progress);
-	}
-}
-
-setupUpload();
-
-setInterval(prependNewThumbnails, 5 * 60 * 1000);
+setInterval(sauf.prependNewThumbnails, 5 * 60 * 1000);
 
 document.querySelector('#thumbnails-wrapper').onscroll = function() {
 	if (this.firstElementChild.offsetHeight - this.scrollTop < this.offsetHeight*2) {
-		appendOldThumbnails();
+		sauf.appendOldThumbnails();
 	}
 };
 
@@ -1133,20 +626,6 @@ if (document.location.pathname.substr(0, 2) == "/!") {
 	currentAnimated = false;
 }
 
-var left = document.querySelector('#arrow-left');
-if (left) {
-	left.onclick = function(e) {
-		sauf.viewer.showPrevious();
-	};
-}
-
-var right = document.querySelector('#arrow-right');
-if (right) {
-	right.onclick = function(e) {
-		sauf.viewer.showNext();
-	};
-}
-
 window.onpopstate = function(e) {
 	var needsSearch = false;
 
@@ -1185,10 +664,6 @@ window.onpopstate = function(e) {
 		performSearch(currentTerm, currentAnimated);
 	} else {
 		sauf.viewer.close();
-	}
-
-	if (history.state.upload == true) {
-		showUpload();
 	}
 };
 

@@ -2,10 +2,60 @@ var Sauf = function(doc) {
 	this.document = doc;
 	this.thumbnails = {};
 
+	this.initThumbnails();
+
 	this.viewer = new Viewer(this);
 	this.status = new Status(this);
 
-	this.initThumbnails();
+	this.searchOptions = {
+		animated: true,
+		pictures: true,
+		links: true,
+		search: ""
+	};
+};
+
+Sauf.prototype.searchParameters = function() {
+	return {
+		pictures: this.searchOptions.pictures ? '1' : '0',
+		links:    this.searchOptions.links    ? '1' : '0',
+		animated: this.searchOptions.animated ? '1' : undefined,
+		search:   this.searchOptions.search != "" ? currentTerm : undefined
+	};
+};
+
+Sauf.prototype.prependNewThumbnails = function() {
+	var options = this.searchParameters();
+	options.since = this.firstThumbnail().dataset.date;
+
+	var self = this;
+
+	this.retrieveThumbnails(options, function(responseText) {
+		var data;
+		if (data = JSON.parse(responseText)) {
+			data.sort(function(a, b) { return +a.id > +b.id ? 1 : -1 });
+			for (var i in data) {
+				self.prependThumbnail(data[i]);
+			}
+		}
+	});
+};
+
+Sauf.prototype.appendOldThumbnails = function() {
+	var options = this.searchParameters();
+	options.until = this.lastThumbnail().dataset.date;
+
+	var self = this;
+
+	this.retrieveThumbnails(options, function(responseText) {
+		var data;
+		if (data = JSON.parse(responseText)) {
+			data.sort(function(a, b) { return +a.id > +b.id ? 1 : -1 });
+			for (var i in data) {
+				self.appendThumbnail(data[i]);
+			}
+		}
+	});
 };
 
 Sauf.prototype.retrieveThumbnails = function(params, callback) {
@@ -310,7 +360,29 @@ var Viewer = function(site) {
 	this.site = site;
 	this.opened = false;
 
-//	var image = document.querySelector('#thumbnails a[data-id="' + picture_id + '"]');
+	var element = this.site.document.querySelector('#viewer');
+
+	if (element) {
+		this.element = element;
+
+		this.extra = this.site.document.querySelector('#viewer .extra');
+		this.picture = this.site.document.querySelector('#viewer .picture');
+		this.left = this.site.document.querySelector('#viewer #arrow-left');
+		this.right = this.site.document.querySelector('#viewer #arrow-right');
+		this.container = this.site.document.querySelector('#viewer #arrow-right');
+
+		this.picture.addEventListener('click', this);
+		this.left.addEventListener('click', this);
+		this.right.addEventListener('click', this);
+
+		var displayed = this.site.document.querySelector('#viewer .media');
+
+		var thumbnail = this.site.findThumbnailById(displayed.dataset.uniqueId);
+
+		if (thumbnail && thumbnail.media) {
+			this.media = thumbnail.media;
+		}
+	}
 };
 
 Viewer.prototype.createElement = function() {
@@ -539,12 +611,7 @@ Viewer.prototype.show = function(media) {
 	this.container.insertBefore(this.previewElement, this.right);
 
 	if (media.isVideo()) {
-		var progress = document.createElement('progress');
-		progress.value = 0;
-		progress.max = 100;
-		this.container.appendChild(progress);
-
-		attachProgressUpdateHandler(this.previewElement, progress);
+		this.createProgressControl();
 	}
 
 	this.previewElement.focus();
@@ -552,6 +619,40 @@ Viewer.prototype.show = function(media) {
 	this.site.status.show(media);
 
 	this.opened = true;
+};
+
+Viewer.prototype.createProgressControl = function() {
+	var progress = document.createElement('progress');
+	progress.value = 0;
+	progress.max = 100;
+	this.container.appendChild(progress);
+
+	var video = this.previewElement;
+
+	video.addEventListener('canplay', function() {
+		progress.style.maxWidth = video.clientWidth + 'px';
+	});
+
+	window.onresize = function() {
+		progress.style.maxWidth = video.clientWidth + 'px';
+	};
+
+	video.addEventListener('timeupdate', function() {
+		var percent = (100 / video.duration) * video.currentTime;
+		progress.value = percent;
+	}, false);
+
+	progress.addEventListener('click', function(e) {
+		e.preventDefault();
+		e.stopPropagation();
+
+		var start = this.getClientRects()[0].left;
+		var stop = this.getClientRects()[0].right;
+
+		var position = (e.clientX - start) / (stop - start);
+
+		video.currentTime = Math.round(video.duration * position * 100) / 100;
+	});
 };
 
 Viewer.prototype.close = function() {
