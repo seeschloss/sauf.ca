@@ -1,3 +1,5 @@
+"use strict";
+
 var Sauf = function(doc) {
 	this.document = doc;
 	this.thumbnails = {};
@@ -207,6 +209,24 @@ Status.prototype.reset = function() {
 };
 
 Status.prototype.show = function(media) {
+	var formatDate = function(timestamp) {
+		var date = new Date(timestamp * 1000);
+
+		var day = date.getDate();
+		var month = date.getMonth() + 1;
+		var year = date.getFullYear();
+
+		var hour = date.getHours();
+		var minute = date.getMinutes();
+
+		if (day    < 10) { day    = "0" + day;    }
+		if (month  < 10) { month  = "0" + month;  }
+		if (hour   < 10) { hour   = "0" + hour;   }
+		if (minute < 10) { minute = "0" + minute; }
+
+		return day + "/" + month + "/" + year + " " + hour + ":" + minute;
+	};
+
 	this.clear();
 
 	var thumbnail = media.parent;

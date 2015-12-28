@@ -429,6 +429,7 @@ HTML;
 		return '
 			<script type="text/javascript" src="sauf.new.js"></script>
 			<script type="text/javascript" src="sauf.4.js"></script>
+			<script type="text/javascript" src="sauf.tribune.js"></script>
 		</body>
 	</html>';
 		}
