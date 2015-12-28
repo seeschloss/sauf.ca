@@ -7,7 +7,7 @@ class Logger
 		$level = $function;
 		$message = $arguments[0];
 
-		$file = $GLOBALS['config']['logging']['directory'] . date('Y-m-d').'.log';
+		$file = $GLOBALS['config']['logging']['directory'] . '/' . date('Y-m-d').'.log';
 		
 		if (!file_exists($GLOBALS['config']['logging']['directory']))
 			{
