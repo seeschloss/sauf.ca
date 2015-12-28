@@ -636,6 +636,22 @@ XML;
 
 		return true;
 		}
+
+	function dimensions()
+		{
+		if ($this->type == 'video/webm')
+			{
+			$output = `ffprobe -v error -show_entries stream=width,height -of default=noprint_wrappers=1:nokey=1 "{$this->path}"`;
+			list($w, $h) = explode("\n", $output);
+			return [$w, $h];
+			}
+		else
+			{
+			list($width_orig, $height_orig, $image_type) = getimagesize($this->path);
+
+			return [$width_orig, $height_orig];
+			}
+		}
 	}
 
 function UnsharpMask($img, $amount, $radius, $threshold)    {

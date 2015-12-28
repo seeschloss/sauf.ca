@@ -389,18 +389,22 @@ var Viewer = function(site) {
 		this.picture = this.site.document.querySelector('#viewer .picture');
 		this.left = this.site.document.querySelector('#viewer #arrow-left');
 		this.right = this.site.document.querySelector('#viewer #arrow-right');
-		this.container = this.site.document.querySelector('#viewer #arrow-right');
+		this.container = this.site.document.querySelector('#viewer .displayed-picture');
 
 		this.picture.addEventListener('click', this);
 		this.left.addEventListener('click', this);
 		this.right.addEventListener('click', this);
 
-		var displayed = this.site.document.querySelector('#viewer .media');
+		this.previewElement = this.site.document.querySelector('#viewer .media');
 
-		var thumbnail = this.site.findThumbnailById(displayed.dataset.uniqueId);
+		var thumbnail = this.site.findThumbnailById(this.previewElement.dataset.uniqueId);
 
 		if (thumbnail && thumbnail.media) {
 			this.media = thumbnail.media;
+		}
+
+		if (this.media.isVideo()) {
+			this.createProgressControl();
 		}
 	}
 };
@@ -541,12 +545,11 @@ Viewer.prototype.handlePreviewElementEvent = function(e) {
 
 			var text = document.createElement('span');
 			text.innerHTML = this.previewElement.naturalWidth + 'x' + this.previewElement.naturalHeight + ' (' + Math.round(percent) + '%)';
+			text.innerHTML += " " + this.media.parent.dataset.tags;
 
 			label.appendChild(text);
 
-			this.element.appendChild(label);
-
-			showImageTags(this.previewElement.dataset.pictureId);
+			this.picture.appendChild(label);
 			break;
 	}
 };

@@ -127,6 +127,10 @@ XML;
 			} else {
 				$arrow_right = "<a href='' id='arrow-right' class='hidden'>&gt;</a>";
 			}
+
+			list($width, $height) = $picture->dimensions();
+
+			$label = "{$width}x{$height} {$picture->tags}";
 			
 			if (preg_match('/.webm$/', $picture->path))
 				{
@@ -162,6 +166,9 @@ HTML;
 			</div>
 			<div class='info'>
 			</div>
+			<span class='image-label'>
+				<span>{$label}</span>
+			</span>
 		</div>
 	</div>
 HTML;

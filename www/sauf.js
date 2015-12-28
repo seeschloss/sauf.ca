@@ -100,13 +100,6 @@ var currentAnimated = true;
 var currentPictures = true;
 var currentLinks    = true;
 
-var showImageTags = function(image_id) {
-	var image = document.querySelector('#thumbnails a[data-id="' + image_id + '"]');
-	if (image && document.querySelector('#viewer .image-label span')) {
-		document.querySelector('#viewer .image-label span').innerHTML += " " + image.dataset.tags;
-	}
-};
-
 var lastScroll = 0;
 var viewerScrollHandler = function(e) {
 	e.stopPropagation();
