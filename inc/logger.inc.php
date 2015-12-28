@@ -7,11 +7,11 @@ class Logger
 		$level = $function;
 		$message = $arguments[0];
 
-		$file = __DIR__ . '/../logs/' . date('Y-m-d').'.log';
+		$file = $GLOBALS['config']['logging']['directory'] . date('Y-m-d').'.log';
 		
-		if (!file_exists(__DIR__ . '/../logs/'))
+		if (!file_exists($GLOBALS['config']['logging']['directory']))
 			{
-			mkdir(__DIR__ . '/../logs/');
+			mkdir($GLOBALS['config']['logging']['directory']);
 			}
 
 		file_put_contents($file, gmdate('Y-m-d\TH:i:s').' [' . $level . '] ' . $message . "\n", FILE_APPEND);

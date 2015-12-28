@@ -1,6 +1,9 @@
 <?php
 
 $GLOBALS['config'] = array(
+	'logging' => array(
+		'directory' => __DIR__ . '/../app-logs',
+	),
 	'db' => array(
 		'host' => 'localhost',
 		'database' => 'sauf',
@@ -21,6 +24,9 @@ $GLOBALS['config'] = array(
 	'upload' => array(
 		'directory' => dirname(__FILE__)."/../pictures",
 		'max_size' => 50*1024*1024,
+	),
+	'autotagging' => array(
+		'imagga-auth' => 'IMAGGATOKEN',
 	),
 	'phantomjs' => '/usr/bin/phantomjs',
 );
