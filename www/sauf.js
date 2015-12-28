@@ -156,9 +156,10 @@ var toggleComments = function(image) {
 					form.onsubmit = function(e) {
 						e.preventDefault();
 						e.stopPropagation();
+						var form = this;
 						postComment(image.dataset.tribuneName, this.message.value, function(success, new_comments) {
 							if (success) {
-								this.message.value = "";
+								form.message.value = "";
 							}
 							appendComments(panel, list, new_comments.filter(commentIsInDiscussion));
 						});
