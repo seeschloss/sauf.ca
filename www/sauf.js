@@ -138,7 +138,7 @@ var updateHistory = function() {
 		};
 		var url = "/";
 
-		if (currentTerm || currentAnimated) {
+		if (currentTerm) {
 			data.search = currentTerm;
 			data.animated = currentAnimated;
 			url = "/" + (currentAnimated ? '!' : '?') + currentTerm;
@@ -158,9 +158,17 @@ var updateHistory = function() {
 var performSearch = function(term) {
 	currentTerm = term;
 
+	if (localStorage) {
+		localStorage.searchTerm = currentTerm;
+	}
+
 	var animatedParam = currentAnimated ? '1' : '0';
 	var picturesParam = currentPictures ? '1' : '0';
 	var linksParam = currentLinks ? '1' : '0';
+
+	document.cookie = "animated=" + animatedParam;
+	document.cookie = "pictures=" + picturesParam;
+	document.cookie = "links=" + linksParam;
 
 	var uri = 'latest.json?count=250&animated=' + animatedParam + '&pictures=' + picturesParam + '&links=' + linksParam;
 	if (currentTerm != "") {
@@ -173,7 +181,7 @@ var performSearch = function(term) {
 			if (req.status == 200 || req.status == 0) {
 				var data = null;
 				if (data = JSON.parse(req.responseText)) {
-					document.querySelector('#thumbnails').innerHTML = '';
+					sauf.clearThumbnails();
 					data.sort(function(a, b) { return +a.date > +b.date ? -1 : 1 });
 					for (var i in data) {
 						sauf.appendThumbnail(data[i]);
@@ -385,17 +393,17 @@ if (window.localStorage && window.localStorage.quiet == "true") {
 if (window.localStorage) {
 	var needsSearch = false;
 
-	if (window.localStorage.showLinks != undefined) {
+	if (window.localStorage.showLinks != undefined || document.cookie.search(/links=1/) >= 0) {
 		currentLinks = window.localStorage.showLinks == "true";
 		document.querySelector('#search #checkbox-links').checked = currentLinks;
 		needsSearch = true;
 	}
-	if (window.localStorage.showPictures != undefined) {
+	if (window.localStorage.showPictures != undefined || document.cookie.search(/pictures=1/) >= 0) {
 		currentPictures = window.localStorage.showPictures == "true";
 		document.querySelector('#search #checkbox-pictures').checked = currentPictures;
 		needsSearch = true;
 	}
-	if (window.localStorage.showAnimated != undefined) {
+	if (window.localStorage.showAnimated != undefined || document.cookie.search(/animated=1/) >= 0) {
 		currentAnimated = window.localStorage.showAnimated == "true";
 		document.querySelector('#search #checkbox-animated').checked = currentAnimated;
 		needsSearch = true;

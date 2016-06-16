@@ -1,166 +1,289 @@
 <?php
 
 class URL {
+	public $id = 0;
+
+	public $screenshot_id = 0;
+	public $thumbnail_id = 0;
+	public $video_id = 0;
+	public $image_id = 0;
+
+	public $random_id = "";
+	public $published = 0;
 	public $url = "";
-	public $headers = array();
-	public $code;
-	public $length = -1;
-	public $encoding;
+	public $date = 0;
+	public $post_tribune_id = 0;
+	public $post_id = 0;
+	public $post_user = "";
+	public $post_message = "";
+	public $post_info = "";
 
-	public $data;
+	public $tags = "";
+	public $title = "";
+	public $description = "";
 
-	function __construct($url) {
+	public $unique_id = 0;
+
+	function __construct($url = "") {
 		$this->url = $url;
 	}
 
-	function headers() {
-		$details = parse_url($this->url);
+	function load_by_random_id($random_id) {
+		$data = array();
+		$db = new DB();
 
-		$c = curl_init();
+		$query = 'SELECT u.*, t.name as tribune_name, t.url as tribune_url
+			FROM urls u
+			LEFT JOIN tribunes t
+			  ON u.post_tribune_id = t.id
+			WHERE u.random_id = \''.$db->escape($random_id).'\'';
+			;
+		$result = $db->query($query);
 
-		if (strpos($details['host'], 'ecx.images-amazon') !== FALSE) {
-			$nobody = false;
+		if ($result) while ($row = $result->fetch_assoc()) {
+			$data = $row;
+		}
+
+		foreach ($data as $key => $value) {
+			$this->{$key} = $value;
+		}
+
+		return $this->id;
+	}
+
+	function insert() {
+		$db = new DB();
+
+		$query = 'INSERT INTO urls SET
+			unique_id = '.(int)$this->unique_id.',
+			screenshot_id = '.(int)$this->screenshot_id.',
+			thumbnail_id = '.(int)$this->thumbnail_id.',
+			image_id = '.(int)$this->image_id.',
+			video_id = '.(int)$this->video_id.',
+			random_id = \''.$db->escape($this->random_id).'\',
+			published = '.(int)$this->published.',
+			url = \''.$db->escape($this->url).'\',
+			date = '.(int)$this->date.',
+			post_tribune_id = '.(int)$this->post_tribune_id.',
+			post_id = '.(int)$this->post_id.',
+			post_user = \''.$db->escape($this->post_user).'\',
+			post_message = \''.$db->escape($this->post_message).'\',
+			post_info = \''.$db->escape($this->post_info).'\',
+			title = \''.$db->escape($this->title).'\',
+			description = \''.$db->escape($this->description).'\',
+			tags = \''.$db->escape($this->tags).'\'
+			';
+
+		$db->query($query);
+
+		$this->id = $db->insert_id();
+
+		return $this->id;
+	}
+
+	function update() {
+		if (!$this->id) {
+			return false;
+		}
+
+		$db = new DB();
+
+		$query = 'UPDATE urls SET
+			unique_id = '.(int)$this->unique_id.',
+			screenshot_id = \''.$db->escape($this->screenshot_id).'\',
+			thumbnail_id = '.(int)$this->thumbnail_id.',
+			image_id = '.(int)$this->image_id.',
+			video_id = '.(int)$this->video_id.',
+			random_id = \''.$db->escape($this->random_id).'\',
+			published = '.(int)$this->published.',
+			url = \''.$db->escape($this->url).'\',
+			date = '.(int)$this->date.',
+			post_tribune_id = '.(int)$this->post_tribune_id.',
+			post_id = '.(int)$this->post_id.',
+			post_user = \''.$db->escape($this->post_user).'\',
+			post_message = \''.$db->escape($this->post_message).'\',
+			post_info = \''.$db->escape($this->post_info).'\',
+			title = \''.$db->escape($this->title).'\',
+			description = \''.$db->escape($this->description).'\',
+			tags = \''.$db->escape($this->tags).'\'
+			WHERE id = '.(int)$this->id.'
+			';
+
+		$db->query($query);
+
+		return true;
+	}
+
+	function retrieve_embed() {
+		$url = 'http://fprin.tf/'.
+			'?url=' . urlencode($this->url).
+			'&data=' . $this->random_id.
+			'&callback=http://sauf.ca/callback-fprintf.php';
+
+		Logger::notice("Asking for info on '".$this->url."' at '".$url."'");
+		$http = new HTTP($url);
+		if (!$http->get()) {
+			Logger::error("Could not request info to '".$url."': ".$http->error);
+		}
+	}
+
+	function parse_fprintf_data($data) {
+		Logger::notice(print_r($data, TRUE));
+
+		if (isset($data['title'])) {
+			$this->title = $data['title'];
+		}
+
+		if (isset($data['description'])) {
+			$this->description = $data['description'];
+		}
+
+		if (isset($data['screenshot_pdf']) or isset($data['screenshot_png'])) {
+			$screenshot = new Screenshot();
+			$screenshot->random_id = $this->random_id;
+			
+			if (isset($data['screenshot_pdf'])) {
+				$screenshot->retrieve_image($data['screenshot_pdf'], 'pdf');
+			}
+			
+			if (isset($data['screenshot_png'])) {
+				$screenshot->retrieve_image($data['screenshot_png'], 'png_cropped');
+			}
+			
+			if (isset($data['screenshot_png_full'])) {
+				$screenshot->retrieve_image($data['screenshot_png_full'], 'png_full');
+			}
+
+			if ($screenshot->insert()) {
+				$this->screenshot_id = $screenshot->id;
+			}
+		}
+
+		if (isset($data['thumbnail'])) {
+			$thumbnail = new Thumbnail();
+			$thumbnail->random_id = $this->random_id;
+			
+			if (isset($data['thumbnail'])) {
+				$thumbnail->retrieve_image($data['thumbnail'], 'jpg');
+			}
+			
+			if (isset($data['thumbnail_webm'])) {
+				$thumbnail->retrieve_image($data['thumbnail_webm'], 'webm');
+			}
+			
+			if ($thumbnail->insert()) {
+				$this->thumbnail_id = $thumbnail->id;
+			}
+		}
+
+		if (isset($data['webm']) or isset($data['mp4'])) {
+			$video = new Video();
+			$video->random_id = $this->random_id;
+
+			if (isset($data['webm'])) {
+				$video->retrieve_video($data['webm'], 'webm');
+			}
+
+			if (isset($data['mp4'])) {
+				$video->retrieve_video($data['mp4'], 'mp4');
+			}
+			
+			if ($video->insert()) {
+				$this->video_id = $video->id;
+			}
+		}
+
+		if (isset($data['image'])) {
+			$image = new Image();
+			$image->random_id = $this->random_id;
+
+			if ($image->retrieve_image($data['image'])) {
+				if ($image->insert()) {
+					$this->image_id = $image->id;
+				}
+			}
+		}
+	}
+
+	function generate_thumbnail() {
+	}
+
+	/*
+	function render_thumbnail() {
+		$extra = '';
+		if ($this->animated)
+			{
+			$extra .= ' data-animated="'.$this->animated_src().'"';
+			}
+
+		if ($this->doublons !== null)
+			{
+			$extra .= ' data-bloubs="'.(int)$this->doublons.'"';
+			}
+
+		$src = $this->thumbnail_src ? url(PICTURES_PREFIX.'/'.$this->thumbnail_src, true) : "http://img.sauf.ca/blank.png";
+		$href = '+'.$this->id;
+		$html = <<<HTML
+			<span class="thumbnail"><a id="thumbnail-{$this->id}" href="{$this->target_url()}" class="thumbnail-link picture"
+					data-id="{$this->id}"
+					data-unique-id="{$this->unique_id}"
+					data-media="{($this->animated ? 'animated' : 'image')}"
+					data-title="{$this->attr($this->title)}"
+					data-url="{$this->attr($this->url)}"
+					data-tags="{$this->attr(implode(', ', explode("\n", trim($this->tags))))}"
+					data-date="{$this->date}"
+					data-user-name="{$this->attr($this->user)}"
+					data-tribune-name="{$this->attr($this->tribune_name)}"
+					data-tribune-url="{$this->attr($this->tribune_url)}"
+					data-post-id="{$this->attr($this->post_id)}"
+					data-md5="{$this->attr($this->md5)}"
+					data-type="{$this->attr($this->type)}"
+					data-src="{url(PICTURES_PREFIX.'/'.$this->src, true)}"
+					$extra.
+					'>'.
+				'<img height="'.THUMBNAIL_SIZE.'" width="'.THUMBNAIL_SIZE.'" src="'.$src.'" alt="" />'.
+			'</a></span>
+HTML;
+
+		return $html;
+	}
+	*/
+
+	function attr($string) {
+		return htmlspecialchars($string);
+	}
+
+	function target_url() {
+		if ($this->video_id) {
+			return $this->video()->url();
+		} else if ($this->image_id && !$this->screenshot_id) {
+			return $this->image()->url();
 		} else {
-			$nobody = true;
+			return $this->url;
 		}
 
-		curl_setopt($c, CURLOPT_USERAGENT, "Mozilla/5.0 (X11; Linux x86_64; rv:29.0) Gecko/20100101 Firefox/29.0");
-		curl_setopt($c, CURLOPT_REFERER, $this->referer());
-		curl_setopt($c, CURLOPT_URL, $this->url);
-		curl_setopt($c, CURLOPT_HEADER, true);
-		curl_setopt($c, CURLOPT_NOBODY, $nobody);
-		curl_setopt($c, CURLOPT_RETURNTRANSFER, true);
-		curl_setopt($c, CURLOPT_SSL_VERIFYPEER, false);
-		curl_setopt($c, CURLOPT_CONNECTTIMEOUT, 2);
-		curl_setopt($c, CURLOPT_TIMEOUT, 15);
-		curl_setopt($c, CURLOPT_AUTOREFERER, true);
-		curl_setopt($c, CURLOPT_FOLLOWLOCATION, true);
-		curl_setopt($c, CURLOPT_MAXREDIRS, 5);
-
-		if (!$a = curl_exec($c)) {
-			$this->error = curl_error($c);
-			return false;
-		}
-
-		$this->code = curl_getinfo($c, CURLINFO_HTTP_CODE);
-		$this->length = curl_getinfo($c, CURLINFO_CONTENT_LENGTH_DOWNLOAD);
-		$this->content_type = curl_getinfo($c, CURLINFO_CONTENT_TYPE);
-
-		foreach (explode("\n", $a) as $line) {
-			@list($key, $value) = explode(":", $line, 2);
-			$key = strtolower(trim($key));
-			$value = trim($value);
-			if ($key) {
-				$this->headers[$key] = $value;
+		if (isset($_SERVER['HTTP_HOST']) && strpos($_SERVER['HTTP_HOST'], 'sauf.ca') === FALSE)
+			{
+			return $path;
 			}
-		}
 
-		return $this->headers;
-	}
+		if ((!isset($_SERVER['HTTP']) || !$_SERVER['HTTPS']) && $random)
+			{
+			$SERVERS = array
+				(
+				'//a.img.sauf.ca',
+				'//b.img.sauf.ca',
+				'//c.img.sauf.ca',
+				);
 
-	function referer() {
-		if (empty($this->referer)) {
-			$details = parse_url($this->url);
-			$this->referer = $details['scheme'].'://'.$details['host'];
-		}
-
-		return $this->referer;
-	}
-
-	function body() {
-		$c = curl_init();
-
-		curl_setopt($c, CURLOPT_USERAGENT, "Mozilla/5.0 (X11; Linux x86_64; rv:29.0) Gecko/20100101 Firefox/29.0");
-		curl_setopt($c, CURLOPT_REFERER, $this->referer());
-		curl_setopt($c, CURLOPT_URL, $this->url);
-		curl_setopt($c, CURLOPT_HEADER, false);
-		curl_setopt($c, CURLOPT_NOBODY, false);
-		curl_setopt($c, CURLOPT_RETURNTRANSFER, true);
-		curl_setopt($c, CURLOPT_SSL_VERIFYPEER, false);
-		curl_setopt($c, CURLOPT_CONNECTTIMEOUT, 2);
-		curl_setopt($c, CURLOPT_TIMEOUT, 15);
-		curl_setopt($c, CURLOPT_AUTOREFERER, true);
-		curl_setopt($c, CURLOPT_FOLLOWLOCATION, true);
-		curl_setopt($c, CURLOPT_MAXREDIRS, 5);
-
-		if (!$this->data = curl_exec($c)) {
-			$this->error = curl_error($c);
-			return false;
-		}
-
-		$this->code = curl_getinfo($c, CURLINFO_HTTP_CODE);
-		$this->length = curl_getinfo($c, CURLINFO_CONTENT_LENGTH_DOWNLOAD);
-		$this->content_type = curl_getinfo($c, CURLINFO_CONTENT_TYPE);
-
-		return $this->data;
-	}
-
-	function is_image() {
-		if (!isset($this->content_type)) {
-			$this->headers();
-		}
-
-		list($type) = explode(';', $this->content_type);
-		$content_types = array(
-			'image/gif' => 'gif',
-			'image/jpeg' => 'jpg',
-			'image/jpg' => 'jpg',
-			'image/png' => 'png',
-			'video/webm' => 'webm',
-		);
-		return isset($content_types[$type]);
-	}
-
-	function is_html() {
-		if (!isset($this->content_type)) {
-			$this->headers();
-		}
-
-		list($type) = explode(';', $this->content_type);
-		$content_types = array(
-			'text/html' => 'html',
-			'application/xml' => 'xml',
-			'application/xhtml+xml' => 'xhtml',
-		);
-		return isset($content_types[$type]);
-	}
-
-	function encoding() {
-		if (!empty($this->encoding)) {
-			return $this->encoding;
-		}
-
-		if (!$this->is_html()) {
-			$this->encoding = 'binary';
-			return $this->encoding;
-		}
-
-		// For HTML documents, the charset might be overridden in several ways
-		if (!$this->data) {
-			$this->body();
-		}
-
-		if (preg_match("/<meta[^>]*charset=(?<quote>['\"])(?<charset>.+?)\k<quote>/i", $this->data, $matches)) {
-			if (!empty($matches['charset'])) {
-				$this->encoding = $matches['charset'];
+			$index = abs(crc32($path)) % count($SERVERS);
+			$server = $SERVERS[$index];
 			}
-		} else if (preg_match("/<meta[^>]*http-equiv=(?<quote>['\"])content-type\k<quote>[^>]content=\k<quote>(?<content_type>.+?)\k<quote>/i", $this->data, $matches)) {
-			if (!empty($matches['content_type'])) {
-				$this->content_type = $matches['content_type'];
+		else
+			{
+			$server = 'https://img.sauf.ca';
 			}
-		}
 
-		$parts = explode(';', $this->content_type);
-		foreach ($parts as $part) {
-			if (strpos(strtolower(trim($part)), 'charset=') === 0) {
-				$this->encoding = substr(trim($part), 8);
-			}
-		}
-
-		if (empty($this->encoding)) {
-			$this->encoding = mb_detect_encoding($this->data);
-		}
-
-		return $this->encoding;
+		return $server.'/'.$path;
 	}
 }

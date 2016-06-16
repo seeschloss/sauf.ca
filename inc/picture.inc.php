@@ -341,6 +341,7 @@ XML;
 		if ($this->id = $db->insert_id())
 			{
 			$db->query('INSERT INTO unique_ids (picture_id) VALUES ('.$this->id.')');
+			$this->unique_id = $db->insert_id();
 			}
 		else
 			{
@@ -405,22 +406,114 @@ XML;
 		$a = curl_exec($c);
 		$data = json_decode($a, true);
 		$tags = array();
-		if (is_array($data))
+		if (is_array($data) and isset($data['results'][0]['tags']))
 			{
-			return $a;
+			foreach ($data['results'][0]['tags'] as $tag)
+				{
+				$tags[] = array(
+					'tag' => $tag['tag'],
+					'confidence' => $tag['confidence'] / 100,
+				);
+				}
 			}
 
-		return "";
+		return $tags;
+		}
+
+	function find_tags_clarifai()
+		{
+		$src = $this->src;
+		if ($this->type == 'video/webm')
+			{
+			$path = $this->thumbnail_src;
+			}
+
+		$url = 'https://api.clarifai.com/v1/tag?model=nsfw-v1.0&url='.url(PICTURES_PREFIX.'/'.$src, false);
+
+		$c = curl_init();
+
+		curl_setopt($c, CURLOPT_USERAGENT, "Sauf.ca");
+		curl_setopt($c, CURLOPT_URL, $url);
+		curl_setopt($c, CURLOPT_HTTPHEADER, array(
+			'Authorization: Bearer '.$GLOBALS['config']['autotagging']['clarifai-token'],
+		));
+		curl_setopt($c, CURLOPT_RETURNTRANSFER, true);
+		curl_setopt($c, CURLOPT_CONNECTTIMEOUT, 2);
+		curl_setopt($c, CURLOPT_TIMEOUT, 15);
+
+		Logger::notice('Asking clarifai for tags: '.$url);
+
+		$a = curl_exec($c);
+		$data = json_decode($a, true);
+		$tags = array
+			(
+			'nsfw' => array(
+				'tag' => 'nsfw',
+				'confidence' => NULL,
+				),
+			'sfw' => array(
+				'tag' => 'sfw',
+				'confidence' => 1,
+				),
+			);
+
+		if (is_array($data) and isset($data['results'][0]['result']['tag']))
+			{
+			if (isset($data['results'][0]['result']['tag']['timestamps']))
+				{
+				foreach ($data['results'][0]['result']['tag']['classes'] as $frame => $classes)
+					{
+					foreach ($data['results'][0]['result']['tag']['classes'][$frame] as $i => $class)
+						{
+						switch ($class)
+							{
+							case 'nsfw':
+								$tags['nsfw']['confidence'] = max(
+									$tags['nsfw']['confidence'],
+									$data['results'][0]['result']['tag']['probs'][$frame][$i]
+								);
+								break;
+							case 'sfw':
+								$tags['sfw']['confidence'] = min(
+									$tags['sfw']['confidence'],
+									$data['results'][0]['result']['tag']['probs'][$frame][$i]
+								);
+								break;
+							}
+						}
+					}
+				}
+			else
+				{
+				foreach ($data['results'][0]['result']['tag']['classes'] as $i => $class)
+					{
+					$tags[$class] = array
+						(
+						'tag' => $class,
+						'confidence' => $data['results'][0]['result']['tag']['probs'][$i],
+						);
+					}
+				}
+			}
+
+		return array_values($tags);
 		}
 
 	function find_tags()
 		{
+		$tags = [];
+
 		if (isset($GLOBALS['config']['autotagging']['imagga-auth']))
 			{
-			return $this->find_tags_imagga();
+			$tags = array_merge($tags, $this->find_tags_imagga());
 			}
 
-		return '';
+		if (isset($GLOBALS['config']['autotagging']['clarifai-token']))
+			{
+			$tags = array_merge($tags, $this->find_tags_clarifai());
+			}
+
+		return json_encode($tags);
 
 		if ($this->type == 'video/webm')
 			{
@@ -442,11 +535,18 @@ XML;
 		$tags = array();
 
 		$data = json_decode($this->raw_tags, true);
-		if (is_array($data) and isset($data['results'][0]['tags']))
+		if (is_array($data))
 			{
-			foreach ($data['results'][0]['tags'] as $tag)
+			foreach ($data as $tag)
 				{
-				if ($tag['confidence'] > 20)
+				if ($tag['tag'] == 'nsfw')
+					{
+					if ($tag['confidence'] > 0.8)
+						{
+						$tags[] = 'nsfw';
+						}
+					}
+				else if ($tag['confidence'] > 0.2)
 					{
 					$tags[] = $tag['tag'];
 					}
@@ -645,11 +745,15 @@ XML;
 			list($w, $h) = explode("\n", $output);
 			return [$w, $h];
 			}
-		else
+		else if (file_exists($this->path))
 			{
 			list($width_orig, $height_orig, $image_type) = getimagesize($this->path);
 
 			return [$width_orig, $height_orig];
+			}
+		else
+			{
+			return [0, 0];
 			}
 		}
 	}

@@ -728,6 +728,11 @@ a.thumbnail-link.link img
 	position: absolute;
 	}
 
+a.thumbnail-link.link[data-type="application/pdf"] img
+	{
+	background: white;
+	}
+
 .thumbnail.current img, .thumbnail.current video
 	{
 	border: 5px solid white;

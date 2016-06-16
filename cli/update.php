@@ -1,4 +1,5 @@
 <?php
+
 require __DIR__.'/../inc/common.inc.php';
 
 if (!$argv)
@@ -18,7 +19,9 @@ while ($line = fgets($f))
 	$post = explode("\t", trim($line));
 	$post_id = $post[0];
 	$date = $post[1];
+	$post_info = $post[2];
 	$user_name = $post[3];
+	$post_message = $post[4];
 
 	$timestamp = mktime(substr($date, 8, 2), substr($date, 10, 2), substr($date, 12, 2), substr($date, 4, 2), substr($date, 6, 2), substr($date, 0, 4));
 
@@ -107,6 +110,20 @@ while ($line = fgets($f))
 			$tribune->insert();
 			}
 
+		$url_record = new URL();
+		$url_record->random_id = substr(sha1(rand() . $post_message . $source_url), 0, 32);
+		$url_record->published = 0;
+		$url_record->url = $source_url;
+		$url_record->date = $timestamp;
+		$url_record->post_tribune_id = $tribune->id;
+		$url_record->post_id = $post_id;
+		$url_record->post_user = $user_name;
+		$url_record->post_message = $post_message;
+		$url_record->post_info = $post_info;
+		$url_record->insert();
+
+		$url_record->retrieve_embed();
+
 		$content_type = get_content_type($url);
 		if (Picture::acceptable($content_type) and $data = process_url($url, $content_type))
 			{
@@ -138,6 +155,9 @@ while ($line = fgets($f))
 
 				$images_per_user[$user_name] += 1;
 				}
+
+			$url_record->unique_id = $picture->unique_id;
+			$url_record->update();
 			}
 		else if (Link::acceptable($content_type))
 			{
@@ -152,10 +172,14 @@ while ($line = fgets($f))
 			list($content_type) = explode(';', $content_type);
 			$link->type = $content_type;
 
+			$link->retrieve_embed();
 			$link->generate_thumbnail();
 			Logger::notice('Link created');
 			$link->insert();
 			Logger::notice('Link saved');
+
+			$url_record->unique_id = $link->unique_id;
+			$url_record->update();
 			}
 		}
 	}

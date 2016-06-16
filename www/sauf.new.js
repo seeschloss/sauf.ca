@@ -15,6 +15,13 @@ var Sauf = function(doc) {
 		links: true,
 		search: ""
 	};
+
+	if (localStorage) {
+		this.searchOptions.animated = localStorage.showAnimated;
+		this.searchOptions.pictures = localStorage.showPictures;
+		this.searchOptions.links = localStorage.showLinks;
+		this.searchOptions.search = localStorage.searchTerm;
+	}
 };
 
 Sauf.prototype.searchParameters = function() {
@@ -22,8 +29,13 @@ Sauf.prototype.searchParameters = function() {
 		pictures: this.searchOptions.pictures ? '1' : '0',
 		links:    this.searchOptions.links    ? '1' : '0',
 		animated: this.searchOptions.animated ? '1' : undefined,
-		search:   this.searchOptions.search != "" ? currentTerm : undefined
+		search:   this.searchOptions.search
 	};
+};
+
+Sauf.prototype.clearThumbnails = function() {
+	this.document.querySelector('#thumbnails').innerHTML = '';
+	this.thumbnails = {};
 };
 
 Sauf.prototype.prependNewThumbnails = function() {
@@ -306,7 +318,11 @@ Status.prototype.show = function(media) {
 	if (category == 'image' || category == 'video') {
 		var google = document.createElement('a');
 		google.className = 'google';
-		google.href = 'https://www.google.com/searchbyimage?hl=en&safe=off&site=search&image_url=' + thumbnail.dataset.src;
+		var src = thumbnail.dataset.src;
+		if (src[0] == '/') {
+			src = "https:" + src;
+		}
+		google.href = 'https://www.google.com/searchbyimage?hl=en&safe=off&site=search&image_url=' + src;
 		google.innerHTML = 'Google';
 		this.element.appendChild(google);
 	}
@@ -768,6 +784,7 @@ Thumbnail.createLinkElement = function(data) {
 	link.dataset.tribuneName = data['tribune-name'];
 	link.dataset.tribuneUrl = data['tribune-url'];
 	link.dataset.postId = data['post-id'];
+	link.dataset.uniqueId = data['unique-id'];
 	link.dataset.thumbnailSrc = data['thumbnail-src'];
 	link.dataset.screenshotPng = data['screenshot-png'];
 	link.dataset.screenshotPdf = data['screenshot-pdf'];
@@ -855,6 +872,7 @@ Thumbnail.createPictureElement = function(data) {
 	link.dataset.tribuneName = data['tribune-name'];
 	link.dataset.tribuneUrl = data['tribune-url'];
 	link.dataset.postId = data['post-id'];
+	link.dataset.uniqueId = data['unique-id'];
 	link.dataset.date = data['date'];
 	link.dataset.id = data['id'];
 	link.dataset.tags = data['tags'].join(', ');

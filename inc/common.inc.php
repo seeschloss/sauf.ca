@@ -24,7 +24,7 @@ function search_condition($search, $table = 'p', $extra_or_conditions = '')
 		else if ($term[strlen($term) - 1] == "<")
 			{
 			$condition = "$table.user = '".$db->escape(substr($term, 0, -1))."'";
-			if ($term == 'houplaboom<')
+			if ($term == 'houplaboom<' && false)
 				{
 				$condition .= " AND $table.tags LIKE '%nsfw%'";
 				}
@@ -36,7 +36,7 @@ function search_condition($search, $table = 'p', $extra_or_conditions = '')
 				{
 				$term = 'tut_tu%t';
 				}
-			$condition = "$table.user LIKE '$term%' OR $table.title LIKE '%$term%' OR $table.url LIKE '%$term%' OR $table.tags LIKE '%$term%' OR $table.raw_tags LIKE '%$term%'".$extra_or_conditions;
+			$condition = "$table.user LIKE '$term%' OR $table.title LIKE '%$term%' OR $table.url LIKE '%$term%' OR $table.tags LIKE '%$term%' ".$extra_or_conditions;
 			}
 
 		$conditions[] = "(".$condition.")";
@@ -98,6 +98,16 @@ function is_image($url, &$error)
 	curl_setopt($c, CURLOPT_AUTOREFERER, true);
 	curl_setopt($c, CURLOPT_FOLLOWLOCATION, true);
 	curl_setopt($c, CURLOPT_MAXREDIRS, 5);
+
+	/*
+	if (preg_match('/\.onion$/', $this->url) or strpos($this->url, '.onion/'))
+		{
+		curl_setopt($c, CURLOPT_PROXYTYPE, CURLPROXY_SOCKS5_HOSTNAME);
+		curl_setopt($c, CURLOPT_PROXY, "127.0.0.1:9050");
+		curl_setopt($c, CURLOPT_CONNECTTIMEOUT, 10);
+		curl_setopt($c, CURLOPT_TIMEOUT, 60);
+		}
+	*/
 
 	if (!$a = curl_exec($c))
 		{
@@ -180,6 +190,16 @@ function get_content_type(&$url)
 	curl_setopt($c, CURLOPT_AUTOREFERER, true);
 	curl_setopt($c, CURLOPT_FOLLOWLOCATION, true);
 	curl_setopt($c, CURLOPT_MAXREDIRS, 5);
+
+	/*
+	if (preg_match('/\.onion$/', $this->url) or strpos($this->url, '.onion/'))
+		{
+		curl_setopt($c, CURLOPT_PROXYTYPE, CURLPROXY_SOCKS5_HOSTNAME);
+		curl_setopt($c, CURLOPT_PROXY, "127.0.0.1:9050");
+		curl_setopt($c, CURLOPT_CONNECTTIMEOUT, 10);
+		curl_setopt($c, CURLOPT_TIMEOUT, 60);
+		}
+	*/
 
 	if (!$a = curl_exec($c))
 		{
@@ -297,7 +317,14 @@ function process_url($url, &$content_type)
 
 require_once dirname(__FILE__).'/logger.inc.php';
 require_once dirname(__FILE__).'/db.inc.php';
+
+require_once dirname(__FILE__).'/http.inc.php';
 require_once dirname(__FILE__).'/url.inc.php';
+require_once dirname(__FILE__).'/screenshot.inc.php';
+require_once dirname(__FILE__).'/thumbnail.inc.php';
+require_once dirname(__FILE__).'/video.inc.php';
+require_once dirname(__FILE__).'/image.inc.php';
+
 require_once dirname(__FILE__).'/site.inc.php';
 require_once dirname(__FILE__).'/picture.inc.php';
 require_once dirname(__FILE__).'/link.inc.php';

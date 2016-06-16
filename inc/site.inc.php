@@ -107,7 +107,7 @@ XML;
 		{
 		$uri = substr($_SERVER['REQUEST_URI'], 1);
 
-		if ($uri[0] == '+')
+		if (strlen($uri) > 0 && $uri[0] == '+')
 			{
 			$picture_id = substr($uri, 1);
 			$picture = new Picture();
@@ -286,7 +286,7 @@ HTML;
 
 		if ((!isset($params['links']) or $params['links']) && $GLOBALS['config']['show_links'])
 			{
-			$where = "TRUE";
+			$where = "l.published = 1";
 			if (!empty($params['search']))
 				{
 				$where .= ' AND '.search_condition($params['search'], 'l', "OR l.description LIKE '%".$db->escape($params['search'])."%'");
@@ -350,6 +350,13 @@ HTML;
 			{
 			$params['md5'] = substr($uri, 1);
 			}
+		else if (!empty($_COOKIE))
+			{
+			$params['animated'] = !empty($_COOKIE['animated']);
+			$params['pictures'] = !empty($_COOKIE['pictures']);
+			$params['links'] = !empty($_COOKIE['links']);
+			}
+
 
 		$thumbnails = $this->thumbnails($params);
 

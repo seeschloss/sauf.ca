@@ -22,11 +22,15 @@ class Link
 	public $context = '';
 	public $doublons = null;
 	public $unique_id = 0;
+	public $random_id = "";
+	public $published = 0;
 
 	public $new = false;
 
 	function __construct()
 		{
+		$this->random_id = substr(sha1(rand() . $this->html . $this->url), 0, 32);
+		// Will get overridden when loading an existing link
 		}
 
 	static function acceptable($content_type)
@@ -129,6 +133,11 @@ XML;
 		return join("\t", $array);
 	}
 
+	function animated_src()
+		{
+		return '';
+		}
+
 	function load_by_post_id($post_id)
 		{
 		$data = array();
@@ -165,6 +174,32 @@ XML;
 			LEFT JOIN tribunes t
 			  ON l.tribune_id = t.id
 			WHERE l.id = '.(int)$id
+			;
+		$result = $db->query($query);
+
+		if ($result) while ($row = $result->fetch_assoc())
+			{
+			$data = $row;
+			}
+
+		foreach ($data as $key => $value)
+			{
+			$this->{$key} = $value;
+			}
+
+		return $this->id;
+		}
+
+	function load_by_random_id($random_id)
+		{
+		$data = array();
+		$db = new DB();
+
+		$query = 'SELECT l.*, t.name as tribune_name, t.url as tribune_url
+			FROM links l
+			LEFT JOIN tribunes t
+			  ON l.tribune_id = t.id
+			WHERE l.random_id = \''.$db->escape($random_id).'\'';
 			;
 		$result = $db->query($query);
 
@@ -290,7 +325,9 @@ XML;
 			target = \''.$db->escape($this->target).'\',
 			html = \''.$db->escape($this->html).'\',
 			context = \''.$db->escape($this->context).'\',
-			doublons = '.(int)$this->doublons.'
+			random_id = \''.$db->escape($this->random_id).'\',
+			doublons = '.(int)$this->doublons.',
+			published = '.(int)$this->published.'
 			';
 
 		$db->query($query);
@@ -298,6 +335,7 @@ XML;
 		$this->id = $db->insert_id();
 
 		$db->query('INSERT INTO unique_ids (link_id) VALUES ('.$this->id.')');
+		$this->unique_id = $db->insert_id();
 
 		return $this->id;
 		}
@@ -329,7 +367,9 @@ XML;
 				target = \''.$db->escape($this->target).'\',
 				html = \''.$db->escape($this->html).'\',
 				context = \''.$db->escape($this->context).'\',
-				doublons = '.(int)$this->doublons.'
+				random_id = \''.$db->escape($this->random_id).'\',
+				doublons = '.(int)$this->doublons.',
+				published = '.(int)$this->published.'
 				WHERE id = '.(int)$this->id
 				;
 
@@ -427,11 +467,6 @@ XML;
 
 	function generate_thumbnail()
 		{
-		if ($this->type == 'text/html')
-			{
-			$this->retrieve_embed();
-			}
-
 		$html = '';
 		if ($this->title)
 			{
@@ -462,91 +497,97 @@ XML;
 		$this->html = $html;
 		}
 
+	function parse_fprintf_data($data)
+		{
+		if (isset($data['title']))
+			{
+			$this->title = mb_substr($data['title'], 0, 1024);
+			}
+
+		if (isset($data['description']))
+			{
+			$this->description = mb_substr($data['description'], 0, 2048);
+			}
+
+		if (isset($data['image_url']))
+			{
+			$image_data = file_get_contents($data['image_url']);
+			$finfo = new Finfo(FILEINFO_MIME);
+			@list($mime, $charset) = explode(';', $finfo->buffer($image_data));
+
+			$extension = false;
+			switch ($mime)
+				{
+				case 'image/jpeg':
+					$extension = 'jpg';
+					break;
+				case 'image/gif':
+					$extension = 'gif';
+					break;
+				case 'image/png':
+					$extension = 'png';
+					break;
+				}
+
+			if ($extension)
+				{
+				$dir = date('Y-m-d', $this->date);
+				$filename = md5($this->url).'.'.$extension;
+				$image_path = UPLOAD_DIR.'/'.$dir.'/t'.$filename;
+				file_put_contents($image_path, $image_data);
+				link_render_crop($image_path, $image_path, 50, 50, true, $mime);
+				$this->thumbnail_path = $image_path;
+				$this->thumbnail_src = $dir.'/t'.$filename;
+				}
+			}
+
+		if (isset($data['screenshot_png_full']))
+			{
+			$dir = date('Y-m-d', $this->date);
+			$filename = md5($this->url).'.png';
+			$screenshot_path = UPLOAD_DIR.'/'.$dir.'/'.$filename;
+
+			$png = file_get_contents($data['screenshot_png_full']);
+			file_put_contents($screenshot_path, $png);
+
+			$this->screenshot_path = $screenshot_path;
+			$this->screenshot_src = $dir.'/'.$filename;
+			}
+
+		if (!file_exists($this->thumbnail_path) && isset($data['screenshot_png']))
+			{
+			$dir = date('Y-m-d', $this->date);
+			$filename = md5($this->url).'.png';
+			$thumbnail_path = UPLOAD_DIR.'/'.$dir.'/t'.$filename;
+
+			$png = file_get_contents($data['screenshot_png']);
+			file_put_contents($thumbnail_path, $png);
+
+			$this->thumbnail_path = $thumbnail_path;
+			$this->thumbnail_src = $dir.'/t'.$filename;
+			}
+
+		if (isset($data['screenshot_pdf']))
+			{
+			$dir = date('Y-m-d', $this->date);
+			$filename_pdf = md5($this->url).'.pdf';
+			$screenshot_path_pdf = UPLOAD_DIR.'/'.$dir.'/'.$filename_pdf;
+			$pdf_path = UPLOAD_DIR.'/'.$dir.'/'.$filename_pdf;
+
+			$pdf = file_get_contents($data['screenshot_pdf']);
+			file_put_contents($pdf_path, $pdf);
+			}
+		}
+
 	function retrieve_embed()
 		{
-		$url = 'http://fprin.tf/?url=' . urlencode($this->url);
+		$url = 'http://fprin.tf/?url=' . urlencode($this->url) . '&data=' . $this->random_id . '&callback=http://sauf.ca/callback.php';
+
 		Logger::notice("Asking for info on '".$this->url."' at '".$url."'");
 		$json = file_get_contents($url);
 		if ($data = json_decode($json, TRUE))
 			{
-			if (isset($data['title']))
-				{
-				$this->title = mb_substr($data['title'], 0, 1024);
-				}
-
-			if (isset($data['description']))
-				{
-				$this->description = mb_substr($data['description'], 0, 2048);
-				}
-
-			if (isset($data['image_url']))
-				{
-				$image_data = file_get_contents($data['image_url']);
-				$finfo = new Finfo(FILEINFO_MIME);
-				@list($mime, $charset) = explode(';', $finfo->buffer($image_data));
-
-				$extension = false;
-				switch ($mime)
-					{
-					case 'image/jpeg':
-						$extension = 'jpg';
-						break;
-					case 'image/gif':
-						$extension = 'gif';
-						break;
-					case 'image/png':
-						$extension = 'png';
-						break;
-					}
-
-				if ($extension)
-					{
-					$dir = date('Y-m-d', $this->date);
-					$filename = md5($this->url).'.'.$extension;
-					$image_path = UPLOAD_DIR.'/'.$dir.'/t'.$filename;
-					file_put_contents($image_path, $image_data);
-					link_render_crop($image_path, $image_path, 50, 50, true, $mime);
-					$this->thumbnail_path = $image_path;
-					$this->thumbnail_src = $dir.'/t'.$filename;
-					}
-				}
-
-			if (isset($data['screenshot_png_full']))
-				{
-				$dir = date('Y-m-d', $this->date);
-				$filename = md5($this->url).'.png';
-				$screenshot_path = UPLOAD_DIR.'/'.$dir.'/'.$filename;
-
-				$png = file_get_contents($data['screenshot_png_full']);
-				file_put_contents($screenshot_path, $png);
-
-				$this->screenshot_path = $screenshot_path;
-				$this->screenshot_src = $dir.'/'.$filename;
-				}
-
-			if (!file_exists($this->thumbnail_path) && isset($data['screenshot_png']))
-				{
-				$dir = date('Y-m-d', $this->date);
-				$filename = md5($this->url).'.png';
-				$thumbnail_path = UPLOAD_DIR.'/'.$dir.'/t'.$filename;
-
-				$png = file_get_contents($data['screenshot_png']);
-				file_put_contents($thumbnail_path, $png);
-
-				$this->thumbnail_path = $thumbnail_path;
-				$this->thumbnail_src = $dir.'/t'.$filename;
-				}
-
-			if (isset($data['screenshot_pdf']))
-				{
-				$dir = date('Y-m-d', $this->date);
-				$filename_pdf = md5($this->url).'.pdf';
-				$screenshot_path_pdf = UPLOAD_DIR.'/'.$dir.'/'.$filename_pdf;
-				$pdf_path = UPLOAD_DIR.'/'.$dir.'/'.$filename_pdf;
-
-				$pdf = file_get_contents($data['screenshot_pdf']);
-				file_put_contents($pdf_path, $pdf);
-				}
+			$this->parse_fprintf_data($data);
 			}
 		}
 	}

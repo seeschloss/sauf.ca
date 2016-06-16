@@ -1,23 +1,26 @@
 <?php
 class DB
 	{
-	private $resource;
+	static private $resource;
 
 	function __construct()
 		{
-		$this->resource = new mysqli(
-			$GLOBALS['config']['db']['host'],
-			$GLOBALS['config']['db']['user'],
-			$GLOBALS['config']['db']['password'],
-			$GLOBALS['config']['db']['database']
-		);
-		$this->resource->set_charset("utf8");
+		if (!isset(self::$resource))
+			{
+			self::$resource = new mysqli(
+				$GLOBALS['config']['db']['host'],
+				$GLOBALS['config']['db']['user'],
+				$GLOBALS['config']['db']['password'],
+				$GLOBALS['config']['db']['database']
+			);
+			self::$resource->set_charset("utf8");
+			}
 		}
 
 	function query($query)
 		{
-		$result = $this->resource->query($query);
-		if ($error = mysqli_error($this->resource))
+		$result = self::$resource->query($query);
+		if ($error = mysqli_error(self::$resource))
 			{
 			if (class_exists('Logger'))
 				{
@@ -46,12 +49,12 @@ class DB
 
 	function escape($string)
 		{
-		return $this->resource->real_escape_string($string);
+		return self::$resource->real_escape_string($string);
 		}
 
 	function insert_id()
 		{
-		return $this->resource->insert_id;
+		return self::$resource->insert_id;
 		}
 	}
 
