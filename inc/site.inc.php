@@ -6,6 +6,10 @@ class Site
 
 	private $user = null;
 
+	public static function path($relative_url) {
+		return UPLOAD_DIR.'/'.$relative_url;
+	}
+
 	function __construct($name)
 		{
 		$this->name = $name;

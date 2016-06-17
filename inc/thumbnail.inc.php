@@ -74,7 +74,7 @@ class Thumbnail {
 	function retrieve_image($url, $type) {
 		$http = new HTTP($url);
 		if ($data = $http->get()) {
-			$base_path = UPLOAD_DIR.'/'.date('Y-m-d').'/'.$this->random_id;
+			$base_path = date('Y-m-d').'/'.$this->random_id;
 
 			switch ($type) {
 				case 'png':
@@ -97,7 +97,7 @@ class Thumbnail {
 					return false;
 			}
 
-			file_put_contents($path, $data);
+			file_put_contents(Site::path($path), $data);
 			return true;
 		} else {
 			return false;

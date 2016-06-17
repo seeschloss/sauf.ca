@@ -68,7 +68,7 @@ class Image {
 	function retrieve_image($url) {
 		$http = new HTTP($url);
 		if ($data = $http->get()) {
-			$base_path = UPLOAD_DIR.'/'.date('Y-m-d').'/'.$this->random_id;
+			$base_path = date('Y-m-d').'/'.$this->random_id;
 
 			$finfo = new Finfo(FILEINFO_MIME);
 			@list($mime, $charset) = explode(';', $finfo->buffer($data));
@@ -90,7 +90,7 @@ class Image {
 					return false;
 			}
 
-			file_put_contents($path, $data);
+			file_put_contents(Site::path($path), $data);
 			return true;
 		} else {
 			return false;
