@@ -87,14 +87,15 @@ class OAuth
 		if (isset($_COOKIE['dlfp_token']) and $_COOKIE['dlfp_token'])
 			{
 			$key = hash('sha256', $GLOBALS['config']['oauth']['dlfp']['secret'], TRUE);
+			$cipher = "aes-128-cbc";
 
 			$plaintext = base64_decode($_COOKIE['dlfp_token']);
-			$iv_size = mcrypt_get_iv_size(MCRYPT_RIJNDAEL_128, MCRYPT_MODE_CBC);
+			$iv_size = openssl_cipher_iv_length($cipher);
 
 			$iv = substr($plaintext, 0, $iv_size);
 			$crypted = substr($plaintext, $iv_size + 1);
 
-			$decrypted = trim(mcrypt_decrypt(MCRYPT_RIJNDAEL_128, $key, $crypted, MCRYPT_MODE_CBC, $iv));
+			$decrypted = openssl_decrypt($crypted, $cipher, $key, 0, $iv);
 
 			if ($value = json_decode($decrypted) and isset($value->token))
 				{
@@ -110,14 +111,15 @@ class OAuth
 		if (isset($_COOKIE['dlfp_token']) and $_COOKIE['dlfp_token'])
 			{
 			$key = hash('sha256', $GLOBALS['config']['oauth']['dlfp']['secret'], TRUE);
+			$cipher = "aes-128-cbc";
 
 			$plaintext = base64_decode($_COOKIE['dlfp_token']);
-			$iv_size = mcrypt_get_iv_size(MCRYPT_RIJNDAEL_128, MCRYPT_MODE_CBC);
+			$iv_size = openssl_cipher_iv_length($cipher);
 
 			$iv = substr($plaintext, 0, $iv_size);
 			$crypted = substr($plaintext, $iv_size + 1);
 
-			$decrypted = trim(mcrypt_decrypt(MCRYPT_RIJNDAEL_128, $key, $crypted, MCRYPT_MODE_CBC, $iv));
+			$decrypted = openssl_decrypt($crypted, $cipher, $key, 0, $iv);
 
 			if ($value = json_decode($decrypted) and isset($value->refresh))
 				{
@@ -136,8 +138,9 @@ class OAuth
 		));
 
 		$key = hash('sha256', $GLOBALS['config']['oauth']['dlfp']['secret'], TRUE);
-		$iv = mcrypt_create_iv(mcrypt_get_iv_size(MCRYPT_RIJNDAEL_128, MCRYPT_MODE_CBC));
-		$encrypted = mcrypt_encrypt(MCRYPT_RIJNDAEL_128, $key, $value, MCRYPT_MODE_CBC, $iv);
+		$cipher = "aes-128-cbc";
+		$iv = openssl_random_pseudo_bytes(openssl_cipher_iv_length($cipher));
+		$encrypted = openssl_encrypt($value, $cipher, $key, 0, $iv);
 		setcookie('dlfp_token', base64_encode($iv.':'.$encrypted), $expire, NULL, NULL, FALSE, TRUE);
 		}
 
