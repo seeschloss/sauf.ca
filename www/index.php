@@ -164,19 +164,20 @@ $content .= $site->viewer().'
 				<div class="links">
 					<ul>
 						<li class="external">
-							<a href="http://tfeserver.fr/tribune_urls.html">URL postées</a>
+							<a href="http://bombefourchette.com/">Historique</a>
+						</li>
+						<li class="external">
+							<a href="https://moul.es">Statistiques</a>
 						</li>
 						<li class="external spacer">
-							<a href="http://bombefourchette.com/">Historique</a>
+							<a href="https://sauf.ca/feeds/all.xml">Backend</a>
+							(<a href="https://sauf.ca/feeds/all.tsv">TSV</a>)
 						</li>
 						<li>
 							<a href="!">gifs animés</a>
 						</li>
 						<li>
 							<a href="!tut_tut">*tut tut*</a>
-						</li>
-						<li>
-							<a href="/?houplaboom&lt;">houplababes</a>
 						</li>
 					</ul>
 				</div>

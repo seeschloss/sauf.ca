@@ -21,12 +21,12 @@ while ($line = fgets($f))
 	$date = $post[1];
 	$post_info = $post[2];
 	$user_name = $post[3];
-	$post_message = $post[4];
+	$post_message = isset($post[4]) ? $post[4] : "";
 
 	$timestamp = mktime(substr($date, 8, 2), substr($date, 10, 2), substr($date, 12, 2), substr($date, 4, 2), substr($date, 6, 2), substr($date, 0, 4));
 
 	$matches = array();
-	preg_match_all('/href="([^"]*)"/', $post[4], $matches);
+	preg_match_all('/href="([^"]*)"/', $post_message, $matches);
 
 	if (!empty($matches[1])) foreach ($matches[1] as $url)
 		{

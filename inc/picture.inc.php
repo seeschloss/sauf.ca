@@ -388,7 +388,7 @@ XML;
 
 	function find_tags_imagga()
 		{
-		$url = 'http://api.imagga.com/v1/tagging?url='.url(PICTURES_PREFIX.'/'.$this->src, false);
+		$url = 'https://api.imagga.com/v2/tags?image_url='.url(PICTURES_PREFIX.'/'.$this->src, false);
 
 		$c = curl_init();
 
@@ -406,14 +406,51 @@ XML;
 		$a = curl_exec($c);
 		$data = json_decode($a, true);
 		$tags = array();
-		if (is_array($data) and isset($data['results'][0]['tags']))
+		if (is_array($data) and isset($data['result']['tags']))
 			{
-			foreach ($data['results'][0]['tags'] as $tag)
+			foreach ($data['result']['tags'] as $tag)
 				{
 				$tags[] = array(
-					'tag' => $tag['tag'],
+					'tag' => $tag['tag']['en'],
 					'confidence' => $tag['confidence'] / 100,
 				);
+				}
+			}
+
+		return $tags;
+		}
+
+	function find_nsfw_imagga()
+		{
+		$url = 'https://api.imagga.com/v2/categories/nsfw_beta?image_url='.url(PICTURES_PREFIX.'/'.$this->src, false);
+
+		$c = curl_init();
+
+		curl_setopt($c, CURLOPT_USERAGENT, "Sauf.ca");
+		curl_setopt($c, CURLOPT_URL, $url);
+		curl_setopt($c, CURLOPT_HTTPHEADER, array(
+			'Authorization: Basic '.$GLOBALS['config']['autotagging']['imagga-auth'],
+		));
+		curl_setopt($c, CURLOPT_RETURNTRANSFER, true);
+		curl_setopt($c, CURLOPT_CONNECTTIMEOUT, 2);
+		curl_setopt($c, CURLOPT_TIMEOUT, 15);
+
+		Logger::notice('Asking imagga for tags: '.$url);
+
+		$a = curl_exec($c);
+		$data = json_decode($a, true);
+		$tags = array();
+		if (is_array($data) and isset($data['result']['categories']))
+			{
+			foreach ($data['result']['categories'] as $category)
+				{
+				if ($category['name']['en'] == 'nsfw')
+					{
+					$tags[] = array(
+						'tag' => 'nsfw',
+						'confidence' => $category['confidence'] / 100,
+					);
+					}
 				}
 			}
 
@@ -499,6 +536,47 @@ XML;
 		return array_values($tags);
 		}
 
+	function find_tags_deepai()
+		{
+		$src = $this->src;
+		if ($this->type == 'video/webm')
+			{
+			$path = $this->thumbnail_src;
+			}
+
+		$url = 'https://api.deepai.org/api/nsfw-detector';
+
+		$c = curl_init();
+
+		curl_setopt($c, CURLOPT_USERAGENT, "Sauf.ca");
+		curl_setopt($c, CURLOPT_URL, $url);
+		curl_setopt($c, CURLOPT_HTTPHEADER, array(
+			'Api-Key: '.$GLOBALS['config']['autotagging']['deepai-token'],
+		));
+		curl_setopt($c, CURLOPT_POSTFIELDS, array(
+			'image' => url(PICTURES_PREFIX.'/'.$src, false),
+		));
+		curl_setopt($c, CURLOPT_RETURNTRANSFER, true);
+		curl_setopt($c, CURLOPT_CONNECTTIMEOUT, 2);
+		curl_setopt($c, CURLOPT_TIMEOUT, 15);
+
+		Logger::notice('Asking deepai for NSFW: '.$url);
+
+		$a = curl_exec($c);
+		$data = json_decode($a, true);
+
+		$tags = array();
+
+		if (isset($data['output']['nsfw_score'])) {
+			$tags[] = array(
+				'tag' => 'nsfw',
+				'confidence' => $data['output']['nsfw_score'],
+			);
+		}
+
+		return array_values($tags);
+		}
+
 	function find_tags()
 		{
 		$tags = [];
@@ -506,11 +584,17 @@ XML;
 		if (isset($GLOBALS['config']['autotagging']['imagga-auth']))
 			{
 			$tags = array_merge($tags, $this->find_tags_imagga());
+			$tags = array_merge($tags, $this->find_nsfw_imagga());
 			}
 
 		if (isset($GLOBALS['config']['autotagging']['clarifai-token']))
 			{
-			$tags = array_merge($tags, $this->find_tags_clarifai());
+			//$tags = array_merge($tags, $this->find_tags_clarifai());
+			}
+
+		if (isset($GLOBALS['config']['autotagging']['deepai-token']))
+			{
+			//$tags = array_merge($tags, $this->find_tags_deepai());
 			}
 
 		return json_encode($tags);
@@ -635,7 +719,13 @@ XML;
 				{
 				$length = `ffprobe -i {$this->path} -show_format 2>/dev/null | grep duration | sed 's/duration=//'`;
 
-				$skip = str_pad(min(10, $length/10), 2, '0', STR_PAD_LEFT);
+				if ((int)$length > 0) {
+					$skip = str_pad(min(10, (int)$length/10), 2, '0', STR_PAD_LEFT);
+				} else {
+					$skip = "00";
+
+					fprintf(STDERR, "Bad length: '$length' for file '{$this->path}'.\n");
+				}
 
 				unlink($tmp);
 				`ffmpeg -i "{$this->path}" -ss '00:00:{$skip}' -frames 1 "{$tmp}" &>/dev/null`;

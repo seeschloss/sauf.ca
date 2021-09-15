@@ -13,7 +13,7 @@ class DB
 				$GLOBALS['config']['db']['password'],
 				$GLOBALS['config']['db']['database']
 			);
-			self::$resource->set_charset("utf8");
+			self::$resource->set_charset("utf8mb4");
 			}
 		}
 

@@ -267,15 +267,18 @@ HTML;
 			$where .= ' AND u.id > '.(int)$params['last'];
 			}
 
-		$query = 'SELECT p.*, t.name as tribune_name, t.url as tribune_url, u.id as unique_id
-			FROM pictures p
-			LEFT JOIN tribunes t
+		$query = 'SELECT p.*, t.name as tribune_name, t.url as tribune_url
+			FROM tribunes t
+			INNER JOIN (
+				SELECT p.*, u.id as unique_id
+				FROM pictures p
+				INNER JOIN unique_ids u
+				  ON p.id = u.picture_id
+				WHERE '.$where.'
+				ORDER BY u.id DESC
+				LIMIT '.(int)$params['offset'].','.(int)$params['count'].'
+			) p
 			  ON p.tribune_id = t.id
-			INNER JOIN unique_ids u
-			  ON p.id = u.picture_id
-			WHERE '.$where.'
-			ORDER BY u.id DESC, p.date DESC
-			LIMIT '.(int)$params['offset'].','.(int)$params['count'].'
 			';
 		$result = $db->query($query);
 
@@ -303,15 +306,20 @@ HTML;
 				{
 				$where .= ' AND u.id > '.(int)$params['last'];
 				}
-			$query = 'SELECT l.*, t.name as tribune_name, t.url as tribune_url, u.id as unique_id
-				FROM links l
-				LEFT JOIN tribunes t
+			$query = 'SELECT l.*, t.name as tribune_name, t.url as tribune_url
+				FROM tribunes t
+				INNER JOIN (
+					SELECT l.*, u.id as unique_id, urls.post_info as post_info
+					FROM links l
+					INNER JOIN unique_ids u
+					  ON l.id = u.link_id
+					LEFT JOIN urls
+					  ON urls.unique_id = u.id
+					WHERE '.$where.'
+					ORDER BY u.id DESC
+					LIMIT 0,'.(int)$params['count'].'
+				) l
 				  ON l.tribune_id = t.id
-				INNER JOIN unique_ids u
-				  ON l.id = u.link_id
-				WHERE '.$where.'
-				ORDER BY u.id DESC, l.date DESC
-				LIMIT 0,'.(int)$params['count'].'
 				';
 			$result = $db->query($query);
 
@@ -402,21 +410,19 @@ HTML;
 		$html = '';
 
 		$db = new DB();
-		$query = 'SELECT name, count(*) as n
+		$query = 'SELECT count(*) as n
 			FROM pictures
-			GROUP BY name
-			HAVING n > 1
-			ORDER BY n DESC
+			WHERE doublons > 1
 		';
 		$result = $db->query($query);
-		$bloubs = array();
+		$bloubs = 0;
 
 		if ($result) while ($row = $result->fetch_assoc())
 			{
-			$bloubs[] = $row;
+			$bloubs = $row['n'];
 			}
 
-		$html .= count($bloubs).' bloubs';
+		$html .= $bloubs.' bloubs';
 
 		return $html;
 		}

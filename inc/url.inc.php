@@ -115,6 +115,7 @@ class URL {
 	}
 
 	function retrieve_embed() {
+		return false;
 		$url = 'http://fprin.tf/'.
 			'?url=' . urlencode($this->url).
 			'&data=' . $this->random_id.
@@ -159,7 +160,15 @@ class URL {
 			}
 		}
 
-		if (isset($data['thumbnail'])) {
+		if (isset($data['thumbnail_100'])) {
+			$thumbnail = new Thumbnail();
+			$thumbnail->random_id = $this->random_id;
+			$thumbnail->retrieve_image($data['thumbnail_100'], 'jpg');
+			
+			if ($thumbnail->insert()) {
+				$this->thumbnail_id = $thumbnail->id;
+			}
+		} else if (isset($data['thumbnail'])) {
 			$thumbnail = new Thumbnail();
 			$thumbnail->random_id = $this->random_id;
 			
@@ -285,5 +294,36 @@ HTML;
 			}
 
 		return $server.'/'.$path;
+	}
+
+	function advertise() {
+		$tribune = new Tribune();
+		$tribune->load_by_id($this->post_tribune_id);
+
+		if ($this->title && $this->description) {
+			$message = "<u>{$this->title}</u> - {$this->description}";
+		} else if ($this->title) {
+			$message = $this->title;
+		} else if ($this->description) {
+			$message = $this->description;
+		} else {
+			return;
+		}
+
+		if ($this->screenshot_id) {
+			$screenshot = new Screenshot();
+			$screenshot->load_by_id($this->screenshot_id);
+
+			if ($screenshot->png_full) {
+				$message .= " <i>".url("pictures/".$screenshot->png_full)."</i>";
+			} else if ($screenshot->pdf) {
+				$message .= " <i>".url("pictures/".$screenshot->pdf)."</i>";
+			}
+		}
+
+		$clock = date("H:i:s", $this->date);
+		Logger::notice("Posting link on tribune '{$tribune->name}' in answer to {$clock} - {$message}");
+
+		$tribune->post("{$clock} {$message}");
 	}
 }

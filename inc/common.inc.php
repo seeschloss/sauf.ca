@@ -9,6 +9,22 @@ define("THUMBNAIL_SIZE", 100);
 
 define("PICTURES_PREFIX", 'pictures');
 
+function is_blacklisted($url, $type)
+	{
+	if (isset($GLOBALS['config']['blacklist'][$type]))
+		{
+		foreach ($GLOBALS['config']['blacklist'][$type] as $blacklisted_url)
+			{
+			if (strpos($url, $blacklisted_url) === 0)
+				{
+				return true;
+				}
+			}
+		}
+
+	return false;
+	}
+
 function search_condition($search, $table = 'p', $extra_or_conditions = '')
 	{
 	$db = new DB();
@@ -47,6 +63,16 @@ function search_condition($search, $table = 'p', $extra_or_conditions = '')
 
 function url($path, $random = false)
 	{
+	/*
+	switch ($path) {
+		case 'pictures/2016-07-25/1b7fd2fb064ff87467a595ec5bf0e053.pdf':
+			return "http://cypris.seos.fr/".$path;
+			break;
+		default:
+			break;
+	}
+	*/
+
 	if (isset($_SERVER['HTTP_HOST']) && strpos($_SERVER['HTTP_HOST'], 'sauf.ca') === FALSE)
 		{
 		return $path;
@@ -157,7 +183,7 @@ function get_content_type(&$url)
 
 	if (preg_match('/https?:\/\/(www\.)?youtube.com\/[^.]*$/', $url)) {
 		$safe_url = escapeshellarg($url);
-		$url = `youtube-dl -g -f webm {$safe_url}`;
+		$url = `youtube-dl --socket-timeout=10 -g -f webm {$safe_url}`;
 		$url = trim($url);
 	} elseif (false && preg_match('/https?:\/\/([a-z])*\.wikipedia\.org\/wiki\/File:(.)*$/', $url, $matches)) {
 		// Needs some testing
@@ -170,7 +196,12 @@ function get_content_type(&$url)
 
 	$c = curl_init();
 
-	$referer = $details['scheme'].'://'.$details['host'];
+	if (isset($details['scheme']) and isset($details['host'])) {
+		$referer = $details['scheme'].'://'.$details['host'];
+	} else {
+		fprintf(STDERR, "Cannot find scheme and host for url '{$url}'\n");
+		$referer = "";
+	}
 
 	if (strpos($details['host'], 'ecx.images-amazon') !== FALSE) {
 		$nobody = false;
@@ -234,7 +265,7 @@ function process_url($url, &$content_type)
 
 	if (preg_match('/https?:\/\/(www\.)?youtube.com\/[^.]*$/', $url)) {
 		$safe_url = escapeshellarg($url);
-		$url = `youtube-dl -g -f webm {$safe_url}`;
+		$url = `youtube-dl --socket-timeout=10 -g -f webm {$safe_url}`;
 		$url = trim($url);
 	} elseif (false && preg_match('/https?:\/\/([a-z])*\.wikipedia\.org\/wiki\/File:(.)*$/', $url, $matches)) {
 		// Needs some testing

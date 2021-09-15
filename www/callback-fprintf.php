@@ -4,18 +4,18 @@ require '../inc/common.inc.php';
 $body = file_get_contents("php://input");
 
 if (!($data = json_decode($body, TRUE))) {
-	header("400 Bad Request");
+	header("HTTP/1.0 400 Bad Request");
 	die();
 }
 
 if (!isset($data['data'])) {
-	header("400 Bad Request");
+	header("HTTP/1.0 400 Bad Request");
 	die();
 }
 
 $url = new URL();
 if (!$url->load_by_random_id($data['data'])) {
-	header("404 Not Found");
+	header("HTTP/1.0 404 Not Found");
 	die();
 }
 
@@ -27,4 +27,7 @@ $url->published = 1;
 
 $url->update();
 Logger::notice('URL saved');
+
+//$url->advertise();
+//Logger::notice('URL posted on tribune');
 

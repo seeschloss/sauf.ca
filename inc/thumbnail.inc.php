@@ -74,7 +74,7 @@ class Thumbnail {
 	function retrieve_image($url, $type) {
 		$http = new HTTP($url);
 		if ($data = $http->get()) {
-			$base_path = date('Y-m-d').'/'.$this->random_id;
+			$base_path = date('Y-m-d').'/t'.$this->random_id;
 
 			switch ($type) {
 				case 'png':

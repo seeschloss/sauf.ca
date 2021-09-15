@@ -65,7 +65,7 @@ class Link
 			$message .= " <a href=\"".htmlspecialchars($screenshot_png)."\">[png]</a> ";
 
 			$pdf_screenshot_path = str_replace('.png', '.pdf', $this->screenshot_path);
-			if (file_exists($pdf_screenshot_path))
+			if (file_exists($pdf_screenshot_path) and !is_blacklisted($this->url, "pdf"))
 				{
 				$pdf_src = str_replace('.png', '.pdf', $this->screenshot_src);
 				$screenshot_pdf = url(PICTURES_PREFIX.'/'.$pdf_src, false);
@@ -107,7 +107,7 @@ XML;
 			$message .= " <a href=\"".$screenshot_png."\">[png]</a> ";
 
 			$pdf_screenshot_path = str_replace('.png', '.pdf', $this->screenshot_path);
-			if (file_exists($pdf_screenshot_path))
+			if (file_exists($pdf_screenshot_path) and !is_blacklisted($this->url, "pdf"))
 				{
 				$pdf_src = str_replace('.png', '.pdf', $this->screenshot_src);
 				$screenshot_pdf = url(PICTURES_PREFIX.'/'.$pdf_src, false);
@@ -239,7 +239,7 @@ XML;
 			{
 			$screenshot_png = url(PICTURES_PREFIX.'/'.$this->screenshot_src, false);
 			$pdf_screenshot_path = str_replace('.png', '.pdf', $this->screenshot_path);
-			if (file_exists($pdf_screenshot_path))
+			if (file_exists($pdf_screenshot_path) and !is_blacklisted($this->url, "pdf"))
 				{
 				$pdf_src = str_replace('.png', '.pdf', $this->screenshot_src);
 				$screenshot_pdf = url(PICTURES_PREFIX.'/'.$pdf_src, false);
@@ -255,7 +255,7 @@ XML;
 			'description' => $this->description,
 			'target' => $this->target,
 			'user' => $this->user,
-			'user-name' => $this->user,
+			'user-name' => ($this->user == "-" && $this->post_info != "") ? $this->post_info : $this->user,
 			'tags' => explode("\n", trim($this->tags)),
 			'date' => $this->date,
 			'tribune-name' => $this->tribune_name,
@@ -433,7 +433,7 @@ XML;
 			$attributes[] = 'data-screenshot-png="'.htmlspecialchars(url(PICTURES_PREFIX.'/'.$this->screenshot_src, false)).'"';
 			$links = "<a target='_blank' class='link-png' href='".url(PICTURES_PREFIX.'/'.$this->screenshot_src, false)."'>PNG</a>";
 			$pdf_screenshot_path = str_replace('.png', '.pdf', $this->screenshot_path);
-			if (file_exists($pdf_screenshot_path))
+			if (file_exists($pdf_screenshot_path) and !is_blacklisted($this->url, "pdf"))
 				{
 				$pdf_src = str_replace('.png', '.pdf', $this->screenshot_src);
 				$attributes[] = 'data-screenshot-pdf="'.htmlspecialchars(url(PICTURES_PREFIX.'/'.$pdf_src, false)).'"';
@@ -481,7 +481,7 @@ XML;
 			{
 			$extra = "<a class='link-png' href='".$this->screenshot_src."'>PNG</a>";
 			$pdf_screenshot_path = str_replace('.png', '.pdf', $this->screenshot_path);
-			if (file_exists($pdf_screenshot_path))
+			if (file_exists($pdf_screenshot_path) and !is_blacklisted($this->url, "pdf"))
 				{
 				$extra = "<a class='link-pdf' href='".str_replace('.png', '.pdf', $this->screenshot_src)."'>PDF</a>";
 				}

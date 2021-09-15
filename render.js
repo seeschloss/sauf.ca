@@ -19,6 +19,7 @@ RenderUrlToFile = function(url, width, height, filename, filename_pdf, callback)
         width: width,
         height: height
     };
+   // page.settings.userAgent = "Mozilla/5.0 (X11; Linux x86_64; rv:57.0) Gecko/20100101 Firefox/57.0";
     page.settings.userAgent = "Phantom.js bot";
     return page.open(url, function(status) {
         var file;
