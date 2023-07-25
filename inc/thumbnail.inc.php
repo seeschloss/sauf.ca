@@ -16,12 +16,12 @@ class Thumbnail {
 		$db = new DB();
 
 		$query = 'SELECT t.*
-			FROM thumbnails t
+			FROM thumbnails AS t
 			WHERE t.id = \''.$db->escape($id).'\'';
 			;
 		$result = $db->query($query);
 
-		if ($result) while ($row = $result->fetch_assoc()) {
+		if ($result) while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
 			$data = $row;
 		}
 
@@ -35,13 +35,13 @@ class Thumbnail {
 	function insert() {
 		$db = new DB();
 
-		$query = 'INSERT INTO thumbnails SET
-			png = \''.$db->escape($this->png).'\',
-			jpg = \''.$db->escape($this->jpg).'\',
-			gif = \''.$db->escape($this->gif).'\',
-			webm = \''.$db->escape($this->webm).'\',
-			mp4 = \''.$db->escape($this->mp4).'\'
-			';
+		$db->insert('thumbnails', [
+			'png' => "'".$db->escape($this->png)."'",
+			'jpg' => "'".$db->escape($this->jpg)."'",
+			'gif' => "'".$db->escape($this->gif)."'",
+			'webm' => "'".$db->escape($this->webm)."'",
+			'mp4' => "'".$db->escape($this->mp4)."'"
+		]);
 
 		$db->query($query);
 

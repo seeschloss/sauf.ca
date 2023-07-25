@@ -5,10 +5,7 @@ $GLOBALS['config'] = array(
 		'directory' => __DIR__ . '/../app-logs',
 	),
 	'db' => array(
-		'host' => 'localhost',
-		'database' => 'sauf',
-		'user' => 'root',
-		'password' => '',
+		'dsn' => 'sqlite:'.__DIR__.'/../db/sauf.db',
 	),
 	'oauth' => array(
 		'dlfp' => array(

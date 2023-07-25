@@ -94,16 +94,16 @@ XML;
 		$db = new DB();
 
 		$query = 'SELECT p.*, u.id as unique_id, t.name as tribune_name, t.url as tribune_url
-			FROM pictures p
-			LEFT JOIN tribunes t
+			FROM pictures AS p
+			LEFT JOIN tribunes AS t
 			  ON p.tribune_id = t.id
-			LEFT JOIN unique_ids u
+			LEFT JOIN unique_ids AS u
 			  ON p.id = u.picture_id
 			WHERE p.post_id = '.(int)$post_id
 			;
 		$result = $db->query($query);
 
-		if ($result) while ($row = $result->fetch_assoc())
+		if ($result) while ($row = $result->fetch(PDO::FETCH_ASSOC))
 			{
 			$data = $row;
 			}
@@ -122,16 +122,16 @@ XML;
 		$db = new DB();
 
 		$query = 'SELECT p.*, u.id as unique_id, t.name as tribune_name, t.url as tribune_url
-			FROM pictures p
-			LEFT JOIN tribunes t
+			FROM pictures AS p
+			LEFT JOIN tribunes AS t
 			  ON p.tribune_id = t.id
-			LEFT JOIN unique_ids u
+			LEFT JOIN unique_ids AS u
 			  ON p.id = u.picture_id
 			WHERE p.id = '.(int)$id
 			;
 		$result = $db->query($query);
 
-		if ($result) while ($row = $result->fetch_assoc())
+		if ($result) while ($row = $result->fetch(PDO::FETCH_ASSOC))
 			{
 			$data = $row;
 			}
@@ -220,12 +220,12 @@ XML;
 		{
 		$db = new DB();
 		$query = "SELECT COUNT(*)
-			FROM pictures p
+			FROM pictures AS p
 			WHERE p.md5 = '".$db->escape($this->md5)."'"
 			;
 		$bloubs = (int)$db->value($query);
 
-		$query = "UPDATE pictures p
+		$query = "UPDATE pictures AS p
 			SET doublons = ".(int)$bloubs."
 			WHERE p.md5 = '".$db->escape($this->md5)."'"
 			;
@@ -317,26 +317,24 @@ XML;
 		{
 		$db = new DB();
 
-		$query = 'INSERT INTO pictures SET
-			path = \''.$db->escape($this->path).'\',
-			thumbnail_path = \''.$db->escape($this->thumbnail_path).'\',
-			src = \''.$db->escape($this->src).'\',
-			thumbnail_src = \''.$db->escape($this->thumbnail_src).'\',
-			name = \''.$db->escape($this->name).'\',
-			title = \''.$db->escape($this->title).'\',
-			url = \''.$db->escape($this->url).'\',
-			date = \''.$db->escape($this->date).'\',
-			tribune_id = \''.$db->escape($this->tribune_id).'\',
-			post_id = \''.$db->escape($this->post_id).'\',
-			tags = \''.$db->escape($this->tags).'\',
-			raw_tags = \''.$db->escape($this->raw_tags).'\',
-			user = \''.$db->escape($this->user).'\',
-			type = \''.$db->escape($this->type).'\',
-			md5 = \''.$db->escape($this->md5).'\',
-			animated = '.(int)$this->animated.'
-			';
-
-		$db->query($query);
+		$db->insert('pictures', [
+			'path' => "'".$db->escape($this->path)."'",
+			'thumbnail_path' => "'".$db->escape($this->thumbnail_path)."'",
+			'src' => "'".$db->escape($this->src)."'",
+			'thumbnail_src' => "'".$db->escape($this->thumbnail_src)."'",
+			'name' => "'".$db->escape($this->name)."'",
+			'title' => "'".$db->escape($this->title)."'",
+			'url' => "'".$db->escape($this->url)."'",
+			'date' => "'".$db->escape($this->date)."'",
+			'tribune_id' => "'".$db->escape($this->tribune_id)."'",
+			'post_id' => "'".$db->escape($this->post_id)."'",
+			'tags' => "'".$db->escape($this->tags)."'",
+			'raw_tags' => "'".$db->escape($this->raw_tags)."'",
+			'user' => "'".$db->escape($this->user)."'",
+			'type' => "'".$db->escape($this->type)."'",
+			'md5' => "'".$db->escape($this->md5)."'",
+			'animated' => (int)$this->animated
+		]);
 
 		if ($this->id = $db->insert_id())
 			{

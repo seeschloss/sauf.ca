@@ -13,12 +13,12 @@ class Video {
 		$db = new DB();
 
 		$query = 'SELECT v.*
-			FROM videos v
+			FROM videos AS v
 			WHERE v.id = \''.$db->escape($id).'\'';
 			;
 		$result = $db->query($query);
 
-		if ($result) while ($row = $result->fetch_assoc()) {
+		if ($result) while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
 			$data = $row;
 		}
 
@@ -32,10 +32,10 @@ class Video {
 	function insert() {
 		$db = new DB();
 
-		$query = 'INSERT INTO videos SET
-			webm = \''.$db->escape($this->webm).'\',
-			mp4 = \''.$db->escape($this->mp4).'\'
-			';
+		$db->insert('videos', [
+			'webm' => "'".$db->escape($this->webm)."'",
+			'mp4' => "'".$db->escape($this->mp4)."'"
+		]);
 
 		$db->query($query);
 

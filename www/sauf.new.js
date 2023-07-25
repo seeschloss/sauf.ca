@@ -323,6 +323,7 @@ Status.prototype.show = function(media) {
 			src = "https:" + src;
 		}
 		google.href = 'https://www.google.com/searchbyimage?hl=en&safe=off&site=search&image_url=' + src;
+		google.href = 'https://imgops.com/' + src;
 		google.innerHTML = 'Google';
 		this.element.appendChild(google);
 	}

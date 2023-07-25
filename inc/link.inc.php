@@ -144,14 +144,14 @@ XML;
 		$db = new DB();
 
 		$query = 'SELECT l.*, t.name as tribune_name, t.url as tribune_url
-			FROM links l
-			LEFT JOIN tribunes t
+			FROM links AS l
+			LEFT JOIN tribunes AS t
 			  ON l.tribune_id = t.id
 			WHERE l.post_id = '.(int)$post_id
 			;
 		$result = $db->query($query);
 
-		if ($result) while ($row = $result->fetch_assoc())
+		if ($result) while ($row = $result->fetch(PDO::FETCH_ASSOC))
 			{
 			$data = $row;
 			}
@@ -170,14 +170,14 @@ XML;
 		$db = new DB();
 
 		$query = 'SELECT l.*, t.name as tribune_name, t.url as tribune_url
-			FROM links l
-			LEFT JOIN tribunes t
+			FROM links AS l
+			LEFT JOIN tribunes AS t
 			  ON l.tribune_id = t.id
 			WHERE l.id = '.(int)$id
 			;
 		$result = $db->query($query);
 
-		if ($result) while ($row = $result->fetch_assoc())
+		if ($result) while ($row = $result->fetch(PDO::FETCH_ASSOC))
 			{
 			$data = $row;
 			}
@@ -196,14 +196,14 @@ XML;
 		$db = new DB();
 
 		$query = 'SELECT l.*, t.name as tribune_name, t.url as tribune_url
-			FROM links l
-			LEFT JOIN tribunes t
+			FROM links AS l
+			LEFT JOIN tribunes AS t
 			  ON l.tribune_id = t.id
 			WHERE l.random_id = \''.$db->escape($random_id).'\'';
 			;
 		$result = $db->query($query);
 
-		if ($result) while ($row = $result->fetch_assoc())
+		if ($result) while ($row = $result->fetch(PDO::FETCH_ASSOC))
 			{
 			$data = $row;
 			}
@@ -277,12 +277,12 @@ XML;
 		{
 		$db = new DB();
 		$query = "SELECT COUNT(*)
-			FROM links l
+			FROM links AS l
 			WHERE l.url = '".$db->escape($this->url)."'"
 			;
 		$bloubs = (int)$db->value($query);
 
-		$query = "UPDATE links l
+		$query = "UPDATE links AS l
 			SET doublons = ".(int)$bloubs."
 			WHERE l.url = '".$db->escape($this->url)."'"
 			;
@@ -307,30 +307,28 @@ XML;
 		{
 		$db = new DB();
 
-		$query = 'INSERT INTO links SET
-			user = \''.$db->escape($this->user).'\',
-			thumbnail_path = \''.$db->escape($this->thumbnail_path).'\',
-			thumbnail_src = \''.$db->escape($this->thumbnail_src).'\',
-			screenshot_path = \''.$db->escape($this->screenshot_path).'\',
-			screenshot_src = \''.$db->escape($this->screenshot_src).'\',
-			date = \''.$db->escape($this->date).'\',
-			url = \''.$db->escape($this->url).'\',
-			title = \''.$db->escape($this->title).'\',
-			description = \''.$db->escape($this->description).'\',
-			tribune_id = \''.$db->escape($this->tribune_id).'\',
-			post_id = \''.$db->escape($this->post_id).'\',
-			tags = \''.$db->escape($this->tags).'\',
-			raw_tags = \''.$db->escape($this->raw_tags).'\',
-			type = \''.$db->escape($this->type).'\',
-			target = \''.$db->escape($this->target).'\',
-			html = \''.$db->escape($this->html).'\',
-			context = \''.$db->escape($this->context).'\',
-			random_id = \''.$db->escape($this->random_id).'\',
-			doublons = '.(int)$this->doublons.',
-			published = '.(int)$this->published.'
-			';
-
-		$db->query($query);
+		$db->insert('links', [
+			'user' => "'".$db->escape($this->user)."'",
+			'thumbnail_path' => "'".$db->escape($this->thumbnail_path)."'",
+			'thumbnail_src' => "'".$db->escape($this->thumbnail_src)."'",
+			'screenshot_path' => "'".$db->escape($this->screenshot_path)."'",
+			'screenshot_src' => "'".$db->escape($this->screenshot_src)."'",
+			'date' => "'".$db->escape($this->date)."'",
+			'url' => "'".$db->escape($this->url)."'",
+			'title' => "'".$db->escape($this->title)."'",
+			'description' => "'".$db->escape($this->description)."'",
+			'tribune_id' => "'".$db->escape($this->tribune_id)."'",
+			'post_id' => "'".$db->escape($this->post_id)."'",
+			'tags' => "'".$db->escape($this->tags)."'",
+			'raw_tags' => "'".$db->escape($this->raw_tags)."'",
+			'type' => "'".$db->escape($this->type)."'",
+			'target' => "'".$db->escape($this->target)."'",
+			'html' => "'".$db->escape($this->html)."'",
+			'context' => "'".$db->escape($this->context)."'",
+			'random_id' => "'".$db->escape($this->random_id)."'",
+			'doublons' => (int)$this->doublons,
+			'published' => (int)$this->published
+		]);
 
 		$this->id = $db->insert_id();
 

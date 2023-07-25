@@ -172,6 +172,7 @@ function is_acceptable($content_type)
 		'image/jpg' => 'jpg',
 		'image/png' => 'png',
 		'video/webm' => 'webm',
+		'video/mp4' => 'mp4',
 	);
 
 	return isset($content_types[$type]);
@@ -183,7 +184,7 @@ function get_content_type(&$url)
 
 	if (preg_match('/https?:\/\/(www\.)?youtube.com\/[^.]*$/', $url)) {
 		$safe_url = escapeshellarg($url);
-		$url = `youtube-dl --socket-timeout=10 -g -f webm {$safe_url}`;
+		$url = `youtube-dl --socket-timeout=10 -g -f mp4 {$safe_url}`;
 		$url = trim($url);
 	} elseif (false && preg_match('/https?:\/\/([a-z])*\.wikipedia\.org\/wiki\/File:(.)*$/', $url, $matches)) {
 		// Needs some testing
@@ -265,7 +266,7 @@ function process_url($url, &$content_type)
 
 	if (preg_match('/https?:\/\/(www\.)?youtube.com\/[^.]*$/', $url)) {
 		$safe_url = escapeshellarg($url);
-		$url = `youtube-dl --socket-timeout=10 -g -f webm {$safe_url}`;
+		$url = `youtube-dl --socket-timeout=10 -g -f mp4 {$safe_url}`;
 		$url = trim($url);
 	} elseif (false && preg_match('/https?:\/\/([a-z])*\.wikipedia\.org\/wiki\/File:(.)*$/', $url, $matches)) {
 		// Needs some testing

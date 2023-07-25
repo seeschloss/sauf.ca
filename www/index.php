@@ -59,7 +59,7 @@ if (strpos($_SERVER['REQUEST_URI'], '/oauth/dlfp/can_post.json') === 0) {
 } else if (strpos($_SERVER['REQUEST_URI'], '/history.json') === 0) {
 	header('Content-Type: application/json');
 
-	print $site->history_json($_GET['until'], $_GET['count']);
+	print $site->history_json($_GET['until'], $_GET['count'] ?? 250);
 	exit();
 } else if (strpos($_SERVER['REQUEST_URI'], '/tags.json') === 0) {
 	header('Content-Type: application/json');

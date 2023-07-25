@@ -113,7 +113,7 @@ XML;
 
 		if (strlen($uri) > 0 && $uri[0] == '+')
 			{
-			$picture_id = substr($uri, 1);
+			$picture_id = (int)substr($uri, 1);
 			$picture = new Picture();
 			$picture->load($picture_id);
 
@@ -268,23 +268,23 @@ HTML;
 			}
 
 		$query = 'SELECT p.*, t.name as tribune_name, t.url as tribune_url
-			FROM tribunes t
+			FROM tribunes AS t
 			INNER JOIN (
 				SELECT p.*, u.id as unique_id
-				FROM pictures p
-				INNER JOIN unique_ids u
+				FROM pictures AS p
+				INNER JOIN unique_ids AS u
 				  ON p.id = u.picture_id
 				WHERE '.$where.'
 				ORDER BY u.id DESC
 				LIMIT '.(int)$params['offset'].','.(int)$params['count'].'
-			) p
+			) AS p
 			  ON p.tribune_id = t.id
 			';
 		$result = $db->query($query);
 
 		$thumbnails = array();
 
-		if ($result) while ($row = $result->fetch_assoc())
+		if ($result) while ($row = $result->fetch(PDO::FETCH_ASSOC))
 			{
 			$picture = new Picture();
 			$picture->load($row);
@@ -307,23 +307,23 @@ HTML;
 				$where .= ' AND u.id > '.(int)$params['last'];
 				}
 			$query = 'SELECT l.*, t.name as tribune_name, t.url as tribune_url
-				FROM tribunes t
+				FROM tribunes AS t
 				INNER JOIN (
 					SELECT l.*, u.id as unique_id, urls.post_info as post_info
-					FROM links l
-					INNER JOIN unique_ids u
+					FROM links AS l
+					INNER JOIN unique_ids AS u
 					  ON l.id = u.link_id
 					LEFT JOIN urls
 					  ON urls.unique_id = u.id
 					WHERE '.$where.'
 					ORDER BY u.id DESC
 					LIMIT 0,'.(int)$params['count'].'
-				) l
+				) AS l
 				  ON l.tribune_id = t.id
 				';
 			$result = $db->query($query);
 
-			if ($result) while ($row = $result->fetch_assoc())
+			if ($result) while ($row = $result->fetch(PDO::FETCH_ASSOC))
 				{
 				$link = new Link();
 				$link->load($row);
@@ -417,7 +417,7 @@ HTML;
 		$result = $db->query($query);
 		$bloubs = 0;
 
-		if ($result) while ($row = $result->fetch_assoc())
+		if ($result) while ($row = $result->fetch(PDO::FETCH_ASSOC))
 			{
 			$bloubs = $row['n'];
 			}

@@ -33,14 +33,14 @@ class URL {
 		$db = new DB();
 
 		$query = 'SELECT u.*, t.name as tribune_name, t.url as tribune_url
-			FROM urls u
-			LEFT JOIN tribunes t
+			FROM urls AS u
+			LEFT JOIN tribunes AS t
 			  ON u.post_tribune_id = t.id
 			WHERE u.random_id = \''.$db->escape($random_id).'\'';
 			;
 		$result = $db->query($query);
 
-		if ($result) while ($row = $result->fetch_assoc()) {
+		if ($result) while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
 			$data = $row;
 		}
 
@@ -54,27 +54,25 @@ class URL {
 	function insert() {
 		$db = new DB();
 
-		$query = 'INSERT INTO urls SET
-			unique_id = '.(int)$this->unique_id.',
-			screenshot_id = '.(int)$this->screenshot_id.',
-			thumbnail_id = '.(int)$this->thumbnail_id.',
-			image_id = '.(int)$this->image_id.',
-			video_id = '.(int)$this->video_id.',
-			random_id = \''.$db->escape($this->random_id).'\',
-			published = '.(int)$this->published.',
-			url = \''.$db->escape($this->url).'\',
-			date = '.(int)$this->date.',
-			post_tribune_id = '.(int)$this->post_tribune_id.',
-			post_id = '.(int)$this->post_id.',
-			post_user = \''.$db->escape($this->post_user).'\',
-			post_message = \''.$db->escape($this->post_message).'\',
-			post_info = \''.$db->escape($this->post_info).'\',
-			title = \''.$db->escape($this->title).'\',
-			description = \''.$db->escape($this->description).'\',
-			tags = \''.$db->escape($this->tags).'\'
-			';
-
-		$db->query($query);
+		$db->insert('urls', [
+			'unique_id' => (int)$this->unique_id,
+			'screenshot_id' => (int)$this->screenshot_id,
+			'thumbnail_id' => (int)$this->thumbnail_id,
+			'image_id' => (int)$this->image_id,
+			'video_id' => (int)$this->video_id,
+			'random_id' => "'".$db->escape($this->random_id)."'",
+			'published' => (int)$this->published,
+			'url' => "'".$db->escape($this->url)."'",
+			'date' => (int)$this->date,
+			'post_tribune_id' => (int)$this->post_tribune_id,
+			'post_id' => (int)$this->post_id,
+			'post_user' => "'".$db->escape($this->post_user)."'",
+			'post_message' => "'".$db->escape($this->post_message)."'",
+			'post_info' => "'".$db->escape($this->post_info)."'",
+			'title' => "'".$db->escape($this->title)."'",
+			'description' => "'".$db->escape($this->description)."'",
+			'tags' => "'".$db->escape($this->tags)."'"
+		]);
 
 		$this->id = $db->insert_id();
 

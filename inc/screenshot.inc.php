@@ -14,12 +14,12 @@ class Screenshot {
 		$db = new DB();
 
 		$query = 'SELECT s.*
-			FROM screenshots s
+			FROM screenshots AS s
 			WHERE s.id = \''.$db->escape($id).'\'';
 			;
 		$result = $db->query($query);
 
-		if ($result) while ($row = $result->fetch_assoc()) {
+		if ($result) while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
 			$data = $row;
 		}
 
@@ -33,11 +33,11 @@ class Screenshot {
 	function insert() {
 		$db = new DB();
 
-		$query = 'INSERT INTO screenshots SET
-			pdf = \''.$db->escape($this->pdf).'\',
-			png_full = \''.$db->escape($this->png_full).'\',
-			png_cropped = \''.$db->escape($this->png_cropped).'\'
-			';
+		$db->insert('screenshots', [
+			'pdf' => "'".$db->escape($this->pdf)."'",
+			'png_full' => "'".$db->escape($this->png_full)."'",
+			'png_cropped' => "'".$db->escape($this->png_cropped)."'"
+		]);
 
 		$db->query($query);
 

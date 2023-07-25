@@ -7,20 +7,17 @@ class DB
 		{
 		if (!isset(self::$resource))
 			{
-			self::$resource = new mysqli(
-				$GLOBALS['config']['db']['host'],
-				$GLOBALS['config']['db']['user'],
-				$GLOBALS['config']['db']['password'],
-				$GLOBALS['config']['db']['database']
-			);
-			self::$resource->set_charset("utf8mb4");
+			self::$resource = new PDO($GLOBALS['config']['db']['dsn']);
 			}
 		}
 
 	function query($query)
 		{
-		$result = self::$resource->query($query);
-		if ($error = mysqli_error(self::$resource))
+		try
+			{
+			$result = self::$resource->query($query);
+			}
+		catch (PDOException $error)
 			{
 			if (class_exists('Logger'))
 				{
@@ -32,14 +29,26 @@ class DB
 				trigger_error($error);
 				trigger_error("Query was: ".$query);
 				}
+
+			return null;
 			}
+
 		return $result;
 		}
+
+	function insert(string $table, array $values) {
+		$columns = implode(', ', array_keys($values));
+		$values = implode(', ', array_values($values));
+
+		$string = "INSERT INTO `{$table}` ({$columns}) VALUES ({$values})";
+
+		return $this->query($string);
+	}
 
 	function value($query)
 		{
 		$result = $this->query($query);
-		if ($result) while ($row = $result->fetch_array())
+		if ($result) while ($row = $result->fetch(PDO::FETCH_ASSOC))
 			{
 			return $row[0];
 			}
@@ -49,12 +58,12 @@ class DB
 
 	function escape($string)
 		{
-		return self::$resource->real_escape_string($string);
+		return str_replace("'", "''", $string);
 		}
 
 	function insert_id()
 		{
-		return self::$resource->insert_id;
+		return self::$resource->lastInsertId();
 		}
 	}
 

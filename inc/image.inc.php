@@ -14,12 +14,12 @@ class Image {
 		$db = new DB();
 
 		$query = 'SELECT i.*
-			FROM images i
+			FROM images AS i
 			WHERE i.id = \''.$db->escape($id).'\'';
 			;
 		$result = $db->query($query);
 
-		if ($result) while ($row = $result->fetch_assoc()) {
+		if ($result) while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
 			$data = $row;
 		}
 
@@ -33,13 +33,11 @@ class Image {
 	function insert() {
 		$db = new DB();
 
-		$query = 'INSERT INTO images SET
-			png = \''.$db->escape($this->png).'\',
-			jpg = \''.$db->escape($this->jpg).'\',
-			gif = \''.$db->escape($this->gif).'\'
-			';
-
-		$db->query($query);
+		$db->insert('images', [
+			'png' => "'".$db->escape($this->png)."'",
+			'jpg' => "'".$db->escape($this->jpg)."'",
+			'gif' => "'".$db->escape($this->gif)."'"
+		]);
 
 		$this->id = $db->insert_id();
 

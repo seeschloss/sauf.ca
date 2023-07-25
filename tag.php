@@ -15,7 +15,7 @@ $query = 'SELECT p.*
 ';
 $result = $db->query($query);
 
-if ($result) while ($row = $result->fetch_assoc())
+if ($result) while ($row = $result->fetch(PDO::FETCH_ASSOC))
 	{
 	$picture = new Picture();
 	$picture->load($row);

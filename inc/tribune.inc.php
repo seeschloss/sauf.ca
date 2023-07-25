@@ -11,12 +11,12 @@ class Tribune {
 		$db = new DB();
 
 		$query = 'SELECT *
-			FROM tribunes t
+			FROM tribunes AS t
 			WHERE t.id = \''.$db->escape($id).'\''
 			;
 		$result = $db->query($query);
 
-		if ($result) while ($row = $result->fetch_assoc()) {
+		if ($result) while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
 			foreach ($row as $key => $value) {
 				$this->{$key} = $value;
 			}
@@ -31,12 +31,12 @@ class Tribune {
 		$db = new DB();
 
 		$query = 'SELECT *
-			FROM tribunes t
+			FROM tribunes AS t
 			WHERE t.name = \''.$db->escape($name).'\''
 			;
 		$result = $db->query($query);
 
-		if ($result) while ($row = $result->fetch_assoc()) {
+		if ($result) while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
 			foreach ($row as $key => $value) {
 				$this->{$key} = $value;
 			}
@@ -50,10 +50,10 @@ class Tribune {
 	function insert() {
 		$db = new DB();
 
-		$query = 'INSERT INTO tribunes SET
-			name = \''.$db->escape($this->name).'\',
-			url = \''.$db->escape($this->url).'\',
-			';
+		$db->insert('tribunes', [
+			'name' => "'".$db->escape($this->name)."'",
+			'url' => "'".$db->escape($this->url)."'",
+		]);
 
 		$db->query($query);
 

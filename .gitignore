@@ -4,3 +4,4 @@ cert
 www/pictures/*
 cfg/config.inc.php
 *.swp
+db/*.db
