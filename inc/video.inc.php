@@ -69,10 +69,12 @@ class Video {
 
 			switch ($type) {
 				case 'webm':
+					$extension = 'webm';
 					$path = $base_path.'.webm';
 					$this->webm = $path;
 					break;
 				case 'mp4':
+					$extension = 'mp4';
 					$path = $base_path.'.mp4';
 					$this->mp4 = $path;
 					break;
@@ -80,8 +82,7 @@ class Video {
 					return false;
 			}
 
-			file_put_contents(Site::path($path), $data);
-			return true;
+			return File::store($data, time(), $this->random_id, $extension);
 		} else {
 			return false;
 		}

@@ -72,14 +72,17 @@ class Image {
 			@list($mime, $charset) = explode(';', $finfo->buffer($data));
 			switch ($mime) {
 				case 'image/jpeg':
+					$extension = 'jpg';
 					$path = $base_path.'.jpg';
 					$this->jpg = $path;
 					break;
 				case 'image/gif':
+					$extension = 'gif';
 					$path = $base_path.'.gif';
 					$this->gif = $path;
 					break;
 				case 'image/png':
+					$extension = 'png';
 					$path = $base_path.'.png';
 					$this->png = $path;
 					break;
@@ -88,8 +91,7 @@ class Image {
 					return false;
 			}
 
-			file_put_contents(Site::path($path), $data);
-			return true;
+			return File::store($data, time(), $this->random_id, $extension);
 		} else {
 			return false;
 		}

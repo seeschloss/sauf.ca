@@ -72,14 +72,17 @@ class Screenshot {
 
 			switch ($type) {
 				case 'pdf':
+					$extension = 'pdf';
 					$path = $base_path.'.pdf';
 					$this->pdf = $path;
 					break;
 				case 'png_cropped':
+					$extension = 'png';
 					$path = $base_path.'.png';
 					$this->png_cropped = $path;
 					break;
 				case 'png_full':
+					$extension = 'full.png';
 					$path = $base_path.'.full.png';
 					$this->png_full = $path;
 					break;
@@ -87,8 +90,7 @@ class Screenshot {
 					return false;
 			}
 
-			file_put_contents(Site::path($path), $data);
-			return true;
+			return File::store($data, time(), $this->random_id, $extension);
 		} else {
 			return false;
 		}

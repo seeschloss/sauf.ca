@@ -529,57 +529,47 @@ XML;
 
 			if ($extension)
 				{
-				$dir = date('Y-m-d', $this->date);
-				$filename = md5($this->url).'.'.$extension;
-				$image_path = UPLOAD_DIR.'/'.$dir.'/t'.$filename;
-				file_put_contents($image_path, $image_data);
-				link_render_crop($image_path, $image_path, 50, 50, true, $mime);
-				$this->thumbnail_path = $image_path;
-				$this->thumbnail_src = $dir.'/t'.$filename;
+				$this->thumbnail_path = File::path($this->date, 't'.md5($this->url), 'png');
+				$this->thumbnail_src = File::src($this->date, 't'.md5($this->url), 'png');
+
+				File::store($png, $this->date, 't'.md5($this->url), $extension);
+
+				$this->thumbnail_path = File::path($this->date, 't'.md5($this->url), 'png');
+				$this->thumbnail_src = File::src($this->date, 't'.md5($this->url), 'png');
+
+				link_render_crop($this->thumbnail_path, $this->thumbnail_path, 50, 50, true, $mime);
 				}
 			}
 
 		if (isset($data['screenshot_png_full']))
 			{
-			$dir = date('Y-m-d', $this->date);
-			$filename = md5($this->url).'.png';
-			$screenshot_path = UPLOAD_DIR.'/'.$dir.'/'.$filename;
-
 			$png = file_get_contents($data['screenshot_png_full']);
-			file_put_contents($screenshot_path, $png);
+			File::store($png, $this->date, md5($this->url), 'png');
 
-			$this->screenshot_path = $screenshot_path;
-			$this->screenshot_src = $dir.'/'.$filename;
+			$this->screenshot_path = File::path($this->date, md5($this->url), 'png');
+			$this->screenshot_src = File::src($this->date, md5($this->url), 'png');
 			}
 
 		if (!file_exists($this->thumbnail_path) && isset($data['screenshot_png']))
 			{
-			$dir = date('Y-m-d', $this->date);
-			$filename = md5($this->url).'.png';
-			$thumbnail_path = UPLOAD_DIR.'/'.$dir.'/t'.$filename;
-
 			$png = file_get_contents($data['screenshot_png']);
-			file_put_contents($thumbnail_path, $png);
+			File::store($png, $this->date, 't'.md5($this->url), 'png');
 
-			$this->thumbnail_path = $thumbnail_path;
-			$this->thumbnail_src = $dir.'/t'.$filename;
+			$this->thumbnail_path = File::path($this->date, 't'.md5($this->url), 'png');
+			$this->thumbnail_src = File::src($this->date, 't'.md5($this->url), 'png');
 			}
 
 		if (isset($data['screenshot_pdf']))
 			{
-			$dir = date('Y-m-d', $this->date);
-			$filename_pdf = md5($this->url).'.pdf';
-			$screenshot_path_pdf = UPLOAD_DIR.'/'.$dir.'/'.$filename_pdf;
-			$pdf_path = UPLOAD_DIR.'/'.$dir.'/'.$filename_pdf;
-
 			$pdf = file_get_contents($data['screenshot_pdf']);
-			file_put_contents($pdf_path, $pdf);
+			File::store($pdf, $this->date, md5($this->url), 'pdf');
 			}
 		}
 
 	function retrieve_embed()
 		{
 		$url = 'http://fprin.tf/?url=' . urlencode($this->url) . '&data=' . $this->random_id . '&callback=http://sauf.ca/callback.php';
+		//$url = 'http://fprin.tf/?url=' . urlencode($this->url) . '&data=' . $this->random_id ;
 
 		Logger::notice("Asking for info on '".$this->url."' at '".$url."'");
 		$json = file_get_contents($url);

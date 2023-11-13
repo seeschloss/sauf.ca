@@ -78,18 +78,22 @@ class Thumbnail {
 
 			switch ($type) {
 				case 'png':
+					$extension = 'png';
 					$path = $base_path.'.png';
 					$this->png = $path;
 					break;
 				case 'jpg':
+					$extension = 'jpg';
 					$path = $base_path.'.jpg';
 					$this->jpg = $path;
 					break;
 				case 'webm':
+					$extension = 'webm';
 					$path = $base_path.'.webm';
 					$this->webm = $path;
 					break;
 				case 'mp4':
+					$extension = 'mp4';
 					$path = $base_path.'.mp4';
 					$this->mp4 = $path;
 					break;
@@ -97,8 +101,7 @@ class Thumbnail {
 					return false;
 			}
 
-			file_put_contents(Site::path($path), $data);
-			return true;
+			return File::store($data, time(), $this->random_id, $extension);
 		} else {
 			return false;
 		}
