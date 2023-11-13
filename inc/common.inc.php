@@ -63,37 +63,12 @@ function search_condition($search, $table = 'p', $extra_or_conditions = '')
 
 function url($path, $random = false)
 	{
-	/*
-	switch ($path) {
-		case 'pictures/2016-07-25/1b7fd2fb064ff87467a595ec5bf0e053.pdf':
-			return "http://cypris.seos.fr/".$path;
-			break;
-		default:
-			break;
-	}
-	*/
-
 	if (isset($_SERVER['HTTP_HOST']) && strpos($_SERVER['HTTP_HOST'], 'sauf.ca') === FALSE)
 		{
 		return $path;
 		}
 
-	if ((!isset($_SERVER['HTTP']) || !$_SERVER['HTTPS']) && $random)
-		{
-		$SERVERS = array
-			(
-			'//a.img.sauf.ca',
-			'//b.img.sauf.ca',
-			'//c.img.sauf.ca',
-			);
-
-		$index = abs(crc32($path)) % count($SERVERS);
-		$server = $SERVERS[$index];
-		}
-	else
-		{
-		$server = 'https://img.sauf.ca';
-		}
+	$server = 'https://img.sauf.ca';
 
 	return $server.'/'.$path;
 	}
